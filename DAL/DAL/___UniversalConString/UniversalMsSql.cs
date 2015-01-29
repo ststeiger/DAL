@@ -104,9 +104,6 @@ namespace DB.Abstraction
         }
 
 
-
-
-
         public override bool IntegratedSecurity
         {
             get

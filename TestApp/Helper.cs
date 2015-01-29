@@ -1,87 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace TestApp
 {
+
+
     class Helper
     {
-
-        // Helper.GetDefaultSQL(DAL.DBtype);
-        public static string GetDefaultSQL(DB.Abstraction.cDAL.DataBaseEngine_t dbEngine)
-        {
-
-            switch (dbEngine)
-            {
-                case DB.Abstraction.cDAL.DataBaseEngine_t.PostGreSQL:
-                    return @"";
-                case DB.Abstraction.cDAL.DataBaseEngine_t.MySQL:
-                    return @"";
-                case DB.Abstraction.cDAL.DataBaseEngine_t.MS_SQL:
-                    return @"
-SELECT 
-	 name
-	,database_id
-	,create_date
-	,compatibility_level
-	,collation_name
-	,user_access
-	,user_access_desc
-	,is_read_only
-	,is_auto_close_on
-	,is_auto_shrink_on
-	,state
-	,state_desc
-	,is_in_standby
-	,is_cleanly_shutdown
-	,is_supplemental_logging_enabled
-	,snapshot_isolation_state
-	,snapshot_isolation_state_desc
-	,is_read_committed_snapshot_on
-	,recovery_model
-	,recovery_model_desc
-	,page_verify_option
-	,page_verify_option_desc
-	,is_auto_create_stats_on
-	,is_auto_update_stats_on
-	,is_auto_update_stats_async_on
-	,is_ansi_null_default_on
-	,is_ansi_nulls_on
-	,is_ansi_padding_on
-	,is_ansi_warnings_on
-	,is_arithabort_on
-	,is_concat_null_yields_null_on
-	,is_numeric_roundabort_on
-	,is_quoted_identifier_on
-	,is_recursive_triggers_on
-	,is_cursor_close_on_commit_on
-	,is_local_cursor_default
-	,is_fulltext_enabled
-	,is_trustworthy_on
-	,is_db_chaining_on
-	,is_parameterization_forced
-	,is_master_key_encrypted_by_server
-	,is_published
-	,is_subscribed
-	,is_merge_published
-	,is_distributor
-	,is_sync_with_backup
-	,is_broker_enabled
-	,log_reuse_wait
-	,log_reuse_wait_desc
-	,is_date_correlation_on
-	,is_cdc_enabled
-	,is_encrypted
-	,is_honor_broker_priority_on
-FROM master.sys.databases 
-
-ORDER BY name 
-";
-                    
-            } // End Switch 
-
-            return "SELECT 123 AS abc";
-}
 
 
         public class cbItem
@@ -106,8 +29,14 @@ ORDER BY name
                     if (m_csb == null)
                         return "ENGINE SERVER:Port/Database";
 
-                    return string.Format("{0} [{1}]:  {2}{3}/{4}",this.Name, m_csb.Engine.ToString(), m_csb.Server, m_csb.PortString, m_csb.DataBase);
-                }
+                    return string.Format("{0} [{1}]:  {2}{3}/{4}"
+						,this.Name
+						,m_csb.Engine.ToString()
+						,m_csb.Server
+						,m_csb.PortString
+						,m_csb.DataBase
+					);
+                } // End Get
             }
 
 
@@ -170,4 +99,6 @@ ORDER BY name
 
 
     }
+
+
 }
