@@ -133,6 +133,17 @@ namespace DB.Abstraction
         }
 
 
+
+        public virtual string PortString
+        {
+            get
+            {
+                return ":" + this.Port.ToString();
+            }
+            
+        }
+
+
         public virtual string FailoverPartner
         {
             get

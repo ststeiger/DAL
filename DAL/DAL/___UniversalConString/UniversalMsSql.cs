@@ -67,6 +67,17 @@ namespace DB.Abstraction
         //}
 
 
+
+        public override string PortString
+        {
+            get
+            {
+                return "";
+            }
+
+        }
+
+
         public override string FailoverPartner
         {
             get

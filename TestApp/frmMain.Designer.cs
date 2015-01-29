@@ -33,11 +33,17 @@
             this.btnExecute = new System.Windows.Forms.Button();
             this.txtSQL = new System.Windows.Forms.TextBox();
             this.dgvResult = new System.Windows.Forms.DataGridView();
+            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cbConnections = new System.Windows.Forms.ComboBox();
+            this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).BeginInit();
             this.SuspendLayout();
             // 
             // menuStrip1
             // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(678, 24);
@@ -79,11 +85,36 @@
             this.dgvResult.Size = new System.Drawing.Size(653, 232);
             this.dgvResult.TabIndex = 4;
             // 
+            // fileToolStripMenuItem
+            // 
+            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.exitToolStripMenuItem});
+            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.fileToolStripMenuItem.Text = "File";
+            // 
+            // exitToolStripMenuItem
+            // 
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitToolStripMenuItem.Text = "E&xit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // cbConnections
+            // 
+            this.cbConnections.FormattingEnabled = true;
+            this.cbConnections.Location = new System.Drawing.Point(216, 3);
+            this.cbConnections.Name = "cbConnections";
+            this.cbConnections.Size = new System.Drawing.Size(323, 21);
+            this.cbConnections.TabIndex = 5;
+            this.cbConnections.SelectedIndexChanged += new System.EventHandler(this.cbConnections_SelectedIndexChanged);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(678, 452);
+            this.Controls.Add(this.cbConnections);
             this.Controls.Add(this.dgvResult);
             this.Controls.Add(this.txtSQL);
             this.Controls.Add(this.btnExecute);
@@ -94,6 +125,8 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DB Test Application";
             this.Load += new System.EventHandler(this.frmMain_Load);
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -107,6 +140,9 @@
         private System.Windows.Forms.Button btnExecute;
         private System.Windows.Forms.TextBox txtSQL;
         private System.Windows.Forms.DataGridView dgvResult;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ComboBox cbConnections;
     }
 }
 
