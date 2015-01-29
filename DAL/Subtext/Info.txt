@@ -1,0 +1,2 @@
+﻿SubText-2.5.2.0.src\Subtext.Framework\Infrastructure\Installation\Scripting
+SubText-2.5.2.0.src\Subtext.Framework\Properties

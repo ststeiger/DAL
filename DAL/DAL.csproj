@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{102A421D-C917-495B-83ED-422B771996C2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DAL</RootNamespace>
+    <AssemblyName>DAL</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+    <SccProjectName>%24/Tools/CustomSessionProvider/DAL/DAL</SccProjectName>
+    <SccLocalPath>.</SccLocalPath>
+    <SccAuxPath>http://corfoundation:8080/tfs/cor-dev-produktion</SccAuxPath>
+    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;WITH_GPL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;WITH_GPL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Data.Sqlite, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libs\Mono.Data.Sqlite.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libs\PostGreSQL\Npgsql-2.2.0-net20\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Npgsql, Version=2.2.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data.OracleClient" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="FirebirdSql.Data.FirebirdClient">
+      <HintPath>Libs\FirebirdSql.Data.FirebirdClient.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>Libs\MySQL\6.3.7\v2\mysql.data.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>Libs\System.Data.SQLite.DLL</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DAL\Access\cAccess_specific.cs" />
+    <Compile Include="DAL\cDAL.cs" />
+    <Compile Include="DAL\DbProviderFactories.cs" />
+    <Compile Include="DAL\FireBird\cFirebird_schema.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DAL\FireBird\cFirebird_specific.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DAL\GenericExtensions.cs" />
+    <Compile Include="DAL\IEnumerableExtensions.cs" />
+    <Compile Include="DAL\MS_SQL\cMS_SQL_keywords.cs" />
+    <Compile Include="DAL\PasswordEncryption.cs" />
+    <Compile Include="DAL\ScriptSplitter.cs" />
+    <Compile Include="DAL\SQLite\cSQLite_schema.cs" />
+    <Compile Include="DAL\SQLite\cSQLite_specific.cs" />
+    <Compile Include="DAL\Sybase\cSybase_schema.cs" />
+    <Compile Include="DAL\Sybase\cSybase_specific.cs" />
+    <Compile Include="DAL\MySQL\cMySQL_specific.cs" />
+    <Compile Include="DAL\ODBC\cODBC_specific.cs" />
+    <Compile Include="DAL\OleDB\cOleDB_specific.cs" />
+    <Compile Include="DAL\Oracle\cOracle_specific.cs" />
+    <Compile Include="DAL\PostGreSQL\cPostGreSQL_specific.cs" />
+    <Compile Include="DAL\TopologicalSorter.cs" />
+    <Compile Include="DAL\__NET20_Substitute\HashPrimeNumbers.cs" />
+    <Compile Include="DAL\__NET20_Substitute\HashSet.cs" />
+    <Compile Include="DAL\__NewDBtype\cNewDBtype_schema.cs" />
+    <Compile Include="DAL\Access\cAccess_schema.cs" />
+    <Compile Include="DAL\MS_SQL\cMS_SQL_specific.cs" />
+    <Compile Include="DAL\OleDB\cOleDB_schema.cs" />
+    <Compile Include="DAL\MS_SQL\cMS_SQL_schema.cs" />
+    <Compile Include="DAL\MySQL\cMySQL_schema.cs" />
+    <Compile Include="DAL\ODBC\cODBC_schema.cs" />
+    <Compile Include="DAL\Oracle\cOracle_schema.cs" />
+    <Compile Include="DAL\PostGreSQL\cPostGreSQL_schema.cs" />
+    <Compile Include="DAL\__NewDBtype\cNewDBtype_specific.cs" />
+    <Compile Include="DAL\Oracle\OracleClient.cs" />
+    <Compile Include="DAL\___UniversalConString\Universal.cs" />
+    <Compile Include="DAL\___UniversalConString\UniversalFirebird.cs" />
+    <Compile Include="DAL\___UniversalConString\UniversalGeneric.cs" />
+    <Compile Include="DAL\___UniversalConString\UniversalMsSql.cs" />
+    <Compile Include="DAL\___UniversalConString\UniversalNpgSql.cs" />
+    <Compile Include="DAL\___UniversalConString\UniversalOracle.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DAL\SharedLibrary.cs" />
+    <Compile Include="Subtext\Properties\GlobalSuppressions.cs" />
+    <Compile Include="Subtext\Properties\Resources.Designer.cs" />
+    <Compile Include="Subtext\Properties\Settings.Designer.cs" />
+    <Compile Include="Subtext\Properties\Settings1.Designer.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\ConnectionString.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\Exceptions\SqlParseException.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\Exceptions\SqlScriptExecutionException.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\IScript.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\ITemplateScript.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\ParameterValueChangedEventArgs.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\Script.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\ScriptCollection.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\ScriptSplitter.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\SqlScriptRunner.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\TemplateParameter.cs" />
+    <Compile Include="Subtext\Subtext.Scripting\TemplateParameterCollection.cs" />
+    <Compile Include="Trash\Trash.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Info.txt" />
+    <Content Include="Libs\FirebirdSql.Data.FirebirdClient.dll" />
+    <Content Include="Libs\Mono.Data.Sqlite.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.cf.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.entity.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v2\mysql.visualstudio.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v2\mysql.web.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v4\mysql.data.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v4\mysql.data.entity.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v4\mysql.visualstudio.dll" />
+    <Content Include="Libs\MySQL\6.3.7\v4\mysql.web.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\de\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\es\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fi\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fr\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\ja\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Mono.Security.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\de\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\es\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fi\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fr\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\ja\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\LICENSE.txt" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Mono.Security.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.pdb" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.xml" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\zh-CN\Npgsql.resources.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Npgsql.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\policy.2.0.Npgsql.dll" />
+    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\zh-CN\Npgsql.resources.dll" />
+    <Content Include="Libs\System.Data.SQLite.x32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libs\System.Data.SQLite.x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SQL\AddUserRole.sql" />
+    <Content Include="SQL\depends.sql" />
+    <Content Include="SQL\ForeignKeys_Deps_MSSQL.sql" />
+    <Content Include="SQL\ForeignKeys_Deps_ANSI.sql" />
+    <Content Include="SQL\Identi\Analysis.sql" />
+    <Content Include="SQL\Identi\AspNetDB.sql" />
+    <Content Include="SQL\Identi\foo.htm" />
+    <Content Include="SQL\Identi\identity.sql" />
+    <Content Include="SQL\Identi\LoWrite.sql" />
+    <Content Include="SQL\Identi\microajax.js" />
+    <Content Include="SQL\Identi\migrateToIdentity.sql" />
+    <Content Include="SQL\Identi\reqwest.js" />
+    <Content Include="SQL\ListSysadmins.sql" />
+    <Content Include="SQL\Object_Dependencies_MSSQL.sql" />
+    <Content Include="SQL\TempTableExample.sql" />
+    <Content Include="SQL\TempTables.sql" />
+    <Content Include="Subtext\Info.txt" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Libs\SQLite.Interop.x64.dll" />
+    <Content Include="Libs\SQLite.Interop.x32.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Subtext\Properties\Resources.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\README.md" />
+    <None Include="Subtext\Properties\Settings.settings" />
+    <None Include="Libs\System.Data.SQLite.DLL" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties BuildVersion_BuildVersioningStyle="YearStamp.MonthStamp.DayStamp.TimeStamp" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" />
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ItemGroup />
+</Project>

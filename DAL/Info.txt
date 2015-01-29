@@ -1,0 +1,36 @@
+﻿
+
+Oracle
+Sybase
+Sql-Server (2000-2008 R2)
+FireBird
+
+Access
+
+PostGreSQL
+MySQL
+OleDb
+ODBC
+
+
+
+
+
+Gentlemen, we have ODBC working !
+Now you can access Sybase ASE & Oracle & even Access (pre-2007) via ODBC !
+
+This is the fix you have to apply for that:
+Note: Only tested on 64-bit Ubuntu Linux
+
+
+
+http://www.h2database.com/html/main.html
+http://code.google.com/p/h2sharp/
+http://database-management-systems.findthebest.com/compare/16-53/H2-vs-SQLite
+
+
+http://stiern.com/articles/5-cool-ways-to-add-graphs-to-your-website/
+
+http://www.gefahrstoffe-im-griff.de/8.htm
+http://www.daveturpin.com/2010/02/distinct-count-vs-count-distinct/
+
