@@ -12,6 +12,10 @@ namespace TestApp
         [STAThread]
         static void Main()
         {
+            // http://stackoverflow.com/questions/10409576/pass-table-valued-parameter-using-ado-net
+            // var x = System.Data.SqlDbType.Structured;
+
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new frmMain());
