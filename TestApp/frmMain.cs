@@ -173,7 +173,7 @@ namespace TestApp
             DB.Abstraction.UniversalConnectionStringBuilder csb = item.ConnectionStringBuilder;
             DAL = DB.Abstraction.cDAL.CreateInstance(csb.Engine.ToString(), csb.ConnectionString);
 
-			this.txtSQL.Text = DAL.GetDataBasesQueryText ();
+            this.txtSQL.Text = DAL.GetDataBasesQueryText().Replace(",owner_sid", "-- ,owner_sid");
         }
 
 
