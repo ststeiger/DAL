@@ -505,7 +505,8 @@ namespace DB.Abstraction
         {
             System.Data.IDbCommand idbc = this.m_providerFactory.CreateCommand();
             idbc.CommandTimeout = 300;
-            idbc.CommandText = strSQL;
+
+            idbc.CommandText = ReplaceOdbcFunctions(strSQL);
 
             return idbc;
         } // End Function CreateCommand
