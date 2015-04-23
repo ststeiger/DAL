@@ -262,13 +262,13 @@ namespace DB.Abstraction
 
             if (System.StringComparer.InvariantCultureIgnoreCase.Equals("ilike", strFunctionName))
             {
-                string strTerm = "( " + astrArguments[0] + " ILIKE " + astrArguments[1] + " ) ";
+                string strTerm = "( " + astrArguments[0] + " ILIKE " + astrArguments[1] + @" ESCAPE '\' ) ";
                 return strTerm;
             }
 
             if (System.StringComparer.InvariantCultureIgnoreCase.Equals("like", strFunctionName))
             {
-                string strTerm = "( " + astrArguments[0] + " LIKE " + astrArguments[1] + " ) ";
+                string strTerm = "( " + astrArguments[0] + " LIKE " + astrArguments[1] + @" ESCAPE '\' ) ";
                 return strTerm;
             }
 
