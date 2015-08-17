@@ -2711,6 +2711,12 @@ ORDER BY ORDINAL_POSITION
 
         public static string JoinArray<T>(string separator, T[] inputTypeArray)
         {
+            return JoinArray<T>(separator, inputTypeArray, object.ReferenceEquals(typeof(T), typeof(string))  );
+        }
+
+
+        public static string JoinArray<T>(string separator, T[] inputTypeArray, bool sqlEscapeString)
+        {
             string strRetValue = null;
             System.Collections.Generic.List<string> ls = new System.Collections.Generic.List<string>();
 
@@ -2721,7 +2727,7 @@ ORDER BY ORDINAL_POSITION
                 if (!string.IsNullOrEmpty(str))
                 { 
                     // SQL-Escape
-                    if (typeof(T) == typeof(string))
+                    if (sqlEscapeString)
                         str = str.Replace("'", "''");
 
                     ls.Add(str);
@@ -2744,8 +2750,6 @@ ORDER BY ORDINAL_POSITION
 
             if (!strParameterName.StartsWith("@"))
                 strParameterName = "@" + strParameterName;
-
-            System.Type tDataType = typeof(T);
 
             string strSqlInStatement = JoinArray<T>(",", values);
 
