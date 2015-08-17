@@ -2734,7 +2734,7 @@ ORDER BY ORDINAL_POSITION
             ls = null;
 
             return strRetValue;
-        }
+        } // End Function JoinArray
 
 
         public virtual void AddArrayParameter<T>(System.Data.IDbCommand command, string strParameterName, params T[] values)
@@ -2750,7 +2750,7 @@ ORDER BY ORDINAL_POSITION
             string strSqlInStatement = JoinArray<T>(",", values);
 
             command.CommandText = command.CommandText.Replace(strParameterName, strSqlInStatement);
-        } // End Function AddParameter
+        } // End Function AddArrayParameter
 
 
         public virtual System.Data.IDbDataParameter AddParameter(System.Data.IDbCommand command, string strParameterName, object objValue)
