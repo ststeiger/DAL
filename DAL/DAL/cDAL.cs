@@ -2709,6 +2709,50 @@ ORDER BY ORDINAL_POSITION
         } // End Function SqlTypeFromDbType
 
 
+        public static string JoinArray<T>(string separator, T[] inputTypeArray)
+        {
+            string strRetValue = null;
+            System.Collections.Generic.List<string> ls = new System.Collections.Generic.List<string>();
+
+            for (int i = 0; i < inputTypeArray.Length; ++i)
+            {
+                string str = System.Convert.ToString(inputTypeArray[i], System.Globalization.CultureInfo.InvariantCulture);
+
+                if (!string.IsNullOrEmpty(str))
+                { 
+                    // SQL-Escape
+                    if (typeof(T) == typeof(string))
+                        str = str.Replace("'", "''");
+
+                    ls.Add(str);
+                } // End if (!string.IsNullOrEmpty(str))
+
+            } // Next i 
+
+            strRetValue= string.Join(separator, ls.ToArray());
+            ls.Clear();
+            ls = null;
+
+            return strRetValue;
+        }
+
+
+        public virtual void AddArrayParameter<T>(System.Data.IDbCommand command, string strParameterName, params T[] values)
+        {
+            if (values == null)
+                return;
+
+            if (!strParameterName.StartsWith("@"))
+                strParameterName = "@" + strParameterName;
+
+            System.Type tDataType = typeof(T);
+
+            string strSqlInStatement = JoinArray<T>(",", values);
+
+            command.CommandText = command.CommandText.Replace(strParameterName, strSqlInStatement);
+        } // End Function AddParameter
+
+
         public virtual System.Data.IDbDataParameter AddParameter(System.Data.IDbCommand command, string strParameterName, object objValue)
         {
             return AddParameter(command, strParameterName, objValue, System.Data.ParameterDirection.Input);
