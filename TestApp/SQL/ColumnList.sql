@@ -1,0 +1,41 @@
+﻿
+SELECT 
+	 table_schema 
+	,table_name 
+	,
+	N'SELECT * FROM ' + QUOTENAME(table_schema) + '.' + QUOTENAME(table_name) + ' ORDER BY ' 
+	+ 
+	( 
+		SELECT 
+			CASE WHEN ORDINAL_POSITION = 1 THEN '' ELSE ', ' END + QUOTENAME(COLUMN_NAME) 
+		FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE (1=1) 
+		AND TABLE_SCHEMA = it.TABLE_SCHEMA 
+		AND TABLE_NAME = it.TABLE_NAME 
+		
+		ORDER BY ORDINAL_POSITION 
+		
+		FOR XML PATH, TYPE 
+	).value('.[1]', 'nvarchar(MAX)') 
+	AS cmdSelect 
+	
+	,
+	( 
+		SELECT 
+			CASE WHEN ORDINAL_POSITION = 1 THEN '' ELSE ', ' END + QUOTENAME(COLUMN_NAME) 
+		FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE (1=1) 
+		AND TABLE_SCHEMA = it.TABLE_SCHEMA 
+		AND TABLE_NAME = it.TABLE_NAME 
+		
+		ORDER BY ORDINAL_POSITION 
+		
+		FOR XML PATH, TYPE 
+	).value('.[1]', 'nvarchar(MAX)') 
+	AS cmd 
+FROM INFORMATION_SCHEMA.TABLES AS it 
+WHERE TABLE_TYPE = 'BASE TABLE' 
+AND table_schema = 'dbo' 
+AND table_name = '___log'
+
+ORDER BY TABLE_SCHEMA, table_name 
