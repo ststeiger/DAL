@@ -247,12 +247,6 @@ namespace DB.Abstraction
         } // End Function ServerVersionInfo
 
 
-        public override System.Data.DataTable GetEntireTable(string strTableName)
-        {
-            return GetDataTable("SELECT * FROM [" + strTableName.Replace("'", "''") + "]");
-        }
-
-
         public override bool BulkCopy(string strDestinationTable, System.Data.DataTable dt)
         {
             return BulkCopy(strDestinationTable, dt, false);

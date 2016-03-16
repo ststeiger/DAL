@@ -501,20 +501,6 @@ ORDER BY ir.SPECIFIC_NAME ASC
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            string strCatalog = this.m_ConnectionString.Database;
-
-			if (!string.IsNullOrEmpty(strCatalog))
-				strCatalog = strCatalog.Trim();
-
-			if (string.IsNullOrEmpty(strCatalog))
-				return null;
-
-			return GetRoutines (strCatalog);
-        } // End Function GetRoutines
-
-
         public override System.Data.DataTable GetRoutines(string strInitialCatalog)
         {
             string strSQL = @"
@@ -699,66 +685,6 @@ ORDER BY ir.SPECIFIC_NAME ASC
             return strSQL;
         } // End Function GetTableCreateText 
 
-
-        public override System.Data.DataTable GetColumnNames()
-        {
-            string strCatalog = "public"; // this.m_DatabaseConfiguration.strInitialCatalog;
-
-            if (!string.IsNullOrEmpty(strCatalog))
-                strCatalog = strCatalog.Trim();
-
-            if (string.IsNullOrEmpty(strCatalog))
-                return null;
-
-            strCatalog = strCatalog.Replace("'", "''");
-
-            string strSQL = @"SELECT * 
-            FROM INFORMATION_SCHEMA.columns
-            WHERE table_schema = '" + strCatalog + @"' 
-            ORDER BY table_name, ordinal_position
-            ";
-
-            return GetDataTable(strSQL);
-        } // End Function GetColumnNames
-
-
-        // http://www.firebirdfaq.org/faq174/
-        public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
-        {
-            string strCatalog = this.m_ConnectionString.Database;
-
-			if (string.IsNullOrEmpty(strCatalog))
-				return null;
-
-			if (string.IsNullOrEmpty(strTableName))
-				return null;
-
-            strCatalog = strCatalog.Trim();
-            strTableName = strTableName.Trim();
-
-			return GetColumnNamesForTable(strTableName, strCatalog);
-        } // End Function GetColumnNamesForTable
-
-
-        public override System.Data.DataTable GetColumnNamesForTable(string strTableName, string strDbName)
-        {
-            string strSQL = @"
-            SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_NAME ILIKE @strTableName 
-            ORDER BY TABLE_NAME, ORDINAL_POSITION 
-            ";
-
-            System.Data.DataTable dt = null;
-
-            using (System.Data.IDbCommand cmd = this.CreateCommand(strSQL))
-            {
-                this.AddParameter(cmd, "strTableName", strTableName);
-                dt = this.GetDataTable(cmd, strDbName);
-            } // End using cmd 
-
-            return dt;
-        } // End Function GetColumnNamesForTable
-        
 
         public override bool TableExists(string strTableName)
         {

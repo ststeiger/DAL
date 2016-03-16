@@ -108,12 +108,6 @@ namespace DB.Abstraction
         }
 
 
-        public override System.Data.DataTable GetEntireTable(string strTableName)
-        {
-            return GetDataTable("SELECT * FROM [" + strTableName.Replace("'", "''") + "]");
-        }
-
-
         // BulkCopy("dbo.T_Benutzer", dt)
         public override bool BulkCopy(string strDestinationTable, System.Data.DataTable dt)
         {

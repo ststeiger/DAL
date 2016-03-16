@@ -141,12 +141,6 @@ namespace DB.Abstraction
         } // End Function GetConnection
 
 
-        public override System.Data.DataTable GetEntireTable(string strTableName)
-        {
-            return GetDataTable("SELECT * FROM \"" + strTableName.Replace("'", "''") + "\" ");
-        } // End Function GetEntireTable
-
-
     } // End Class cOracle
 
 

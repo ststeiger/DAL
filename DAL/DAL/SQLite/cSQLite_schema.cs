@@ -617,49 +617,6 @@ ORDER BY ROUTINE_TYPE, ROUTINE_NAME ASC
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            return GetRoutines(null);
-        }
-
-
-        public override System.Data.DataTable GetRoutines(string strInitialCatalog)
-        {
-            string strSQL = @"
-SELECT * FROM INFORMATION_SCHEMA.ROUTINES 
-WHERE (1=1) 
-AND ROUTINE_NAME NOT IN 
-(
-     'fn_diagramobjects' 
-    ,'sp_creatediagram' 
-    ,'dt_adduserobject' 
-    ,'dt_droppropertiesbyid' 
-    ,'dt_dropuserobjectbyid' 
-    ,'dt_generateansiname' 
-    ,'dt_getobjwithprop' 
-    ,'dt_getobjwithprop_u' 
-    ,'dt_getpropertiesbyid' 
-    ,'dt_getpropertiesbyid_u' 
-    ,'dt_setpropertybyid' 
-    ,'dt_setpropertybyid_u' 
-    ,'dt_verstamp006' 
-    ,'dt_verstamp007' 
-    ,'sp_alterdiagram' 
-    ,'sp_dropdiagram' 
-    ,'sp_helpdiagramdefinition' 
-    ,'sp_helpdiagrams' 
-    ,'sp_renamediagram' 
-    ,'sp_upgraddiagrams' 
-)
-ORDER BY ROUTINE_TYPE, ROUTINE_NAME ASC 
-";
-
-            return GetDataTable(strSQL, strInitialCatalog);
-        } // End Function GetRoutines
-
-
-        
-
         public override System.Data.DataTable GetColumnNames()
         {
             string strSQL = @"
@@ -795,7 +752,7 @@ AND type = 'table'
             string strNewLine = "\r\n"; //  Environment.NewLine
             string strSQL = strNewLine;
 
-            using (System.Data.DataTable dt = GetColumnNamesForTable(strTableName))
+            using (System.Data.DataTable dt = this.GetColumnNamesForTable(strTableName))
             {
                 strSQL += "INSERT INTO [" + strTableName + "] " + strNewLine;
                 strSQL += "( " + strNewLine;
@@ -1037,41 +994,6 @@ ORDER BY kcu.ordinal_position
         } // End Function GetColumnNamesForTable
 
 
-        public override System.Data.DataTable GetColumnNamesForTable(string strTableName, string strDbName)
-        {
-            string strSQL = @"
-SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_NAME = @strTableName 
-ORDER BY TABLE_NAME, ORDINAL_POSITION 
-";
-
-            System.Data.DataTable dt = null;
-
-            using(System.Data.IDbCommand cmd = this.CreateCommand(strSQL))
-            {
-                this.AddParameter(cmd, "strTableName", strTableName);
-                dt = this.GetDataTable(cmd, strDbName);
-            }
-
-            return dt;
-        }
-
-
-        // GetColumnDefinition
-        public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
-        {
-            strTableName = strTableName.Replace("'", "''");
-
-            string strSQL = @"
-SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_NAME = N'" + strTableName + @"' 
-ORDER BY TABLE_NAME, ORDINAL_POSITION 
-";
-
-            return GetDataTable(strSQL);
-        } // End Function GetColumnNamesForTable
-
-
         // GetColumnDefinition
         public override System.Data.DataTable GetRoutineParameters(string strRoutineName, string strDbName)
         {
@@ -1091,10 +1013,8 @@ ORDER BY ORDINAL_POSITION
                 dt = this.GetDataTable(cmd, strDbName);
             } // End Using cmd
 
-
             return dt;
-        } // End Function GetColumnNamesForTable
-
+        } // End Function GetRoutineParameters
 
 
         // http://www.w3schools.com/sql/sql_default.asp

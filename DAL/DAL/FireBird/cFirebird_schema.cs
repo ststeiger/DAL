@@ -236,7 +236,7 @@ ORDER BY ROUTINE_NAME ASC
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
+        public override System.Data.DataTable GetRoutines(string initialCatalog)
         {
             string strSQL = @"
             SELECT 
@@ -309,44 +309,41 @@ ORDER BY ROUTINE_NAME, SPECIFIC_NAME, ORDINAL_POSITION
 
         public override System.Data.DataTable GetColumnNames()
         {
-            string strSQL = @"SELECT 
-                                 f.rdb$relation_name AS TABLE_NAME 
-                                ,f.rdb$field_name AS COLUMN_NAME 
-                            FROM rdb$relation_fields f
-                            JOIN rdb$relations r 
-                                ON f.rdb$relation_name = r.rdb$relation_name
-                                AND (r.rdb$view_blr IS NULL) 
-                                AND 
-                                (
-                                    r.rdb$system_flag IS NULL 
-                                    OR 
-                                    r.rdb$system_flag = 0
-                                )
-                            ORDER BY 1, f.rdb$field_position;";
+            string strSQL = @"
+SELECT 
+     f.rdb$relation_name AS TABLE_NAME 
+    ,f.rdb$field_name AS COLUMN_NAME 
+FROM rdb$relation_fields f 
+JOIN rdb$relations r 
+    ON f.rdb$relation_name = r.rdb$relation_name 
+    AND (r.rdb$view_blr IS NULL) 
+    AND 
+    ( 
+        r.rdb$system_flag IS NULL 
+        OR 
+        r.rdb$system_flag = 0 
+    ) 
+ORDER BY 1, f.rdb$field_position; 
+";
 
             return GetDataTable(strSQL);
         } // End Function GetColumnNames
 
 
-		public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
-		{
-			return GetColumnNamesForTable(strTableName, null);
-		}
-
 
 		// http://www.alberton.info/firebird_sql_meta_info.html#.UwoJctvX3Qp
 
         // http://www.firebirdfaq.org/faq174/
-		public override System.Data.DataTable GetColumnNamesForTable(string strTableName, string strDbName)
+		public override System.Data.DataTable GetColumnNamesForTable(string tableName, string dbName)
         {
-            if (!string.IsNullOrEmpty(strTableName))
-                strTableName = strTableName.Trim();
+            if (!string.IsNullOrEmpty(tableName))
+                tableName = tableName.Trim();
 
-            if (string.IsNullOrEmpty(strTableName))
+            if (string.IsNullOrEmpty(tableName))
                 return null;
 
-			strTableName = strTableName.ToLower().Replace("'", "''");
-            
+            tableName = tableName.ToLower().Replace("'", "''");
+
 
             string strSQL = @"
 
@@ -398,7 +395,7 @@ LEFT JOIN RDB$TYPES AS sub
     ON sub.RDB$FIELD_NAME = 'RDB$FIELD_SUB_TYPE' 
 	AND sub.RDB$TYPE = f.RDB$FIELD_SUB_TYPE 
     
-WHERE LOWER(r.RDB$RELATION_NAME) = '" + strTableName + @"' 
+WHERE LOWER(r.RDB$RELATION_NAME) = '" + tableName.Replace("'", "''") + @"' 
 
 AND rel.rdb$view_blr IS NULL 
 

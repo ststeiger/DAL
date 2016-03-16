@@ -704,12 +704,6 @@ ORDER BY ROUTINE_TYPE, ROUTINE_NAME ASC
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            return GetRoutines(null);
-        } // End Function GetRoutines
-
-
         public override System.Data.DataTable GetRoutines(string strInitialCatalog)
         {
             string strSQL = @"
@@ -744,8 +738,6 @@ ORDER BY ROUTINE_TYPE, ROUTINE_NAME ASC
             return GetDataTable(strSQL, strInitialCatalog);
         } // End Function GetRoutines
 
-
-        
 
         public override System.Data.DataTable GetColumnNames()
         {

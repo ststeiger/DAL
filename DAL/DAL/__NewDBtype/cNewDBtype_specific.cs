@@ -44,12 +44,6 @@ namespace DB.Abstraction
         }
 
 
-		public override System.Data.DataTable GetEntireTable(string strTableName)
-		{
-			return GetDataTable("SELECT * FROM [" + strTableName.Replace("'", "''") + "]");
-		}
-
-
     } // End Class cNewDBtype
 
 

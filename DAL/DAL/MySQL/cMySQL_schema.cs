@@ -9,7 +9,6 @@ namespace DB.Abstraction
 		////////////////////////////// Schema //////////////////////////////
 		
 
-		
 		public override System.Data.DataTable GetTypes()
 		{
 			string strSQL = @"      SELECT * FROM ( SELECT 'tinyint' AS name, 1 AS GroupId, '' AS descriptionid, 'Numbers' AS GroupName, 'int8. 
@@ -463,36 +462,7 @@ AND routine_type = 'FUNCTION'
 			
 		} // End Function GetFunctions
 		
-		
-		public override System.Data.DataTable GetRoutines()
-		{
-			return GetRoutines (null);
-		}
-		
-		
-		public override System.Data.DataTable GetRoutines(string strDb)
-		{
-			string strCatalog = strDb;
-			
-			if (string.IsNullOrEmpty (strCatalog))
-				strCatalog = this.m_ConnectionString.Database;
-			
-			using (System.Data.IDbCommand cmd = CreateCommand()) 
-			{
-				cmd.CommandText = @"
-SELECT * 
-FROM INFORMATION_SCHEMA.routines 
-WHERE routine_schema = @strCatalog 
-";
-				
-				this.AddParameter(cmd, "strCatalog", strCatalog);
-				
-				return GetDataTable(cmd, strDb);
-			}
-			
-		} // End Function GetRoutines
-		
-		
+
 		public override string GetTableSelectText(string strTableName)
 		{
 			string strNewLine = "\r\n"; //  Environment.NewLine
@@ -599,37 +569,7 @@ WHERE routine_schema = @strCatalog
 			return strSQL;
 		} // End Function GetTableCreateText 
 		
-		
-		public override System.Data.DataTable GetColumnNames()
-		{
-			return GetColumnNames (null);
-		}
-		
-		// override
-		public System.Data.DataTable GetColumnNames(string strDb)
-		{
-			string strCatalog = strDb;
-			
-			if (string.IsNullOrEmpty (strCatalog))
-				strCatalog = this.m_ConnectionString.Database;
-			
-			using (System.Data.IDbCommand cmd = CreateCommand()) 
-			{
-				cmd.CommandText = @"
-SELECT * 
-FROM INFORMATION_SCHEMA.columns 
-WHERE table_schema = @strCatalog 
-ORDER BY table_name, ordinal_position 
-";
-				
-				this.AddParameter(cmd, "strCatalog", strCatalog);
-				
-				return GetDataTable(cmd, strDb);
-			}
-			
-		} // End Function GetColumnNames
-		
-		
+
 		public override System.Data.DataTable GetRoutineParameters(string strRoutineName)
 		{
 			return GetRoutineParameters (strRoutineName, null);
@@ -656,42 +596,7 @@ ORDER BY ORDINAL_POSITION
 			return dt;
 		} // End Function GetRoutineParameters
 		
-		
-		public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
-		{
-			return GetColumnNamesForTable (strTableName, null);
-		}
-		
-		
-		// http://www.firebirdfaq.org/faq174/
-		public override System.Data.DataTable GetColumnNamesForTable(string strTableName, string strDbName)
-		{
-			System.Data.DataTable dt = null;
-			string strCatalog = strDbName;
-			
-			if (string.IsNullOrEmpty (strCatalog))
-				strCatalog = m_ConnectionString.Database;
-			
-			using(System.Data.IDbCommand cmd = this.CreateCommand())
-			{
-				cmd.CommandText = @"
-SELECT * 
-FROM INFORMATION_SCHEMA.columns
-WHERE table_schema = @strCatalog 
-AND table_name = @strTableName 
-ORDER BY table_name, ordinal_position
-";
-				
-				this.AddParameter(cmd, "strCatalog",strCatalog);
-				this.AddParameter(cmd, "strTableName", strTableName);
-				
-				dt = this.GetDataTable(cmd, strDbName);
-			} // End Using cmd
-			
-			return dt;
-		} // End Function GetColumnNamesForTable
-		
-		
+
 		public override bool TableExists(string strTableName)
 		{
 			return TableExists (strTableName, null);

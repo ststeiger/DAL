@@ -70,9 +70,9 @@ namespace DB.Abstraction
         public override System.Data.DataTable GetProcedures()
         {
             string strSQL = @"
-			SELECT 
-				a.RDB$PROCEDURE_NAME AS PROCEDURE_NAME  
-			FROM RDB$PROCEDURES a 
+SELECT 
+	a.RDB$PROCEDURE_NAME AS PROCEDURE_NAME  
+FROM RDB$PROCEDURES a 
 			";
 
             return GetDataTable(strSQL);
@@ -82,84 +82,13 @@ namespace DB.Abstraction
         public override System.Data.DataTable GetFunctions()
         {
             string strSQL = @"
-			SELECT 
-				a.RDB$FUNCTION_NAME AS FUNCTION_NAME 
-			FROM RDB$FUNCTIONS a
+SELECT 
+	a.RDB$FUNCTION_NAME AS FUNCTION_NAME 
+FROM RDB$FUNCTIONS a
 			";
 
             return GetDataTable(strSQL);
         } // End Function GetFunctions
-
-
-        public override System.Data.DataTable GetRoutines()
-        {
-            string strSQL = @"
-            SELECT 
-				a.RDB$FUNCTION_NAME AS ROUTINE_NAME 
-			FROM RDB$FUNCTIONS a
-			
-			UNION
-			
-			SELECT 
-				b.RDB$PROCEDURE_NAME AS ROUTINE_NAME  
-			FROM RDB$PROCEDURES b 
-            ";
-
-            return GetDataTable(strSQL);
-        } // End Function GetRoutines
-
-
-        public override System.Data.DataTable GetColumnNames()
-        {
-            string strSQL = @"SELECT 
-                                 f.rdb$relation_name AS TABLE_NAME 
-                                ,f.rdb$field_name AS COLUMN_NAME 
-                            FROM rdb$relation_fields f
-                            JOIN rdb$relations r 
-                                ON f.rdb$relation_name = r.rdb$relation_name
-                                AND (r.rdb$view_blr IS NULL) 
-                                AND 
-                                (
-                                    r.rdb$system_flag IS NULL 
-                                    OR 
-                                    r.rdb$system_flag = 0
-                                )
-                            ORDER BY 1, f.rdb$field_position;";
-
-            return GetDataTable(strSQL);
-        } // End Function GetColumnNames
-
-
-        // http://www.firebirdfaq.org/faq174/
-        public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
-        {
-            if (!string.IsNullOrEmpty(strTableName))
-                strTableName = strTableName.Trim();
-
-            if (string.IsNullOrEmpty(strTableName))
-                return null;
-
-            strTableName = strTableName.ToUpper().Replace("'", "''");
-            
-
-            string strSQL = @"SELECT 
-                                 f.rdb$relation_name AS TABLE_NAME 
-                                ,f.rdb$field_name AS COLUMN_NAME 
-                            FROM rdb$relation_fields f
-                            JOIN rdb$relations r 
-                                ON f.rdb$relation_name = r.rdb$relation_name
-                                AND (r.rdb$view_blr IS NULL) 
-                                AND 
-                                (
-                                    r.rdb$system_flag IS NULL 
-                                    OR 
-                                    r.rdb$system_flag = 0
-                                )
-                            WHERE f.rdb$relation_name = '" + strTableName + @"'
-                            ORDER BY 1, f.rdb$field_position;";
-
-            return GetDataTable(strSQL);
-        } // End Function GetColumnNamesForTable
 
 
         public override bool TableExists(string strTableName)

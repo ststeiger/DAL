@@ -169,12 +169,6 @@ namespace DB.Abstraction
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            throw new System.NotImplementedException("GetRoutines not implemented.");
-        } // End Function GetRoutines
-
-
         public override System.Data.DataTable GetColumnNames()
         {
             throw new System.NotImplementedException("GetColumnNames not implemented.");

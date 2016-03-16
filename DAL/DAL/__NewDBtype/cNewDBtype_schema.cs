@@ -117,50 +117,6 @@ namespace DB.Abstraction
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            string strCatalog = "strInitialCatalog";
-
-            if (!string.IsNullOrEmpty(strCatalog))
-                strCatalog = strCatalog.Trim();
-
-            if (string.IsNullOrEmpty(strCatalog))
-                return null;
-
-            strCatalog = strCatalog.Replace("'", "''");
-
-            string strSQL = @"
-            SELECT * 
-            FROM INFORMATION_SCHEMA.routines 
-            WHERE routine_schema = '" + strCatalog + "' ";
-
-            return GetDataTable(strSQL);
-        } // End Function GetRoutines
-
-
-        public override System.Data.DataTable GetColumnNames()
-        {
-            string strCatalog = "strInitialCatalog";
-
-            if (!string.IsNullOrEmpty(strCatalog))
-                strCatalog = strCatalog.Trim();
-
-            if (string.IsNullOrEmpty(strCatalog))
-                return null;
-
-            strCatalog = strCatalog.Replace("'", "''");
-
-            string strSQL = @"
-SELECT * 
-FROM INFORMATION_SCHEMA.columns
-WHERE table_schema = '" + strCatalog + @"' 
-ORDER BY table_name, ordinal_position
-";
-
-            return GetDataTable(strSQL);
-        } // End Function GetColumnNames
-
-
         // http://www.firebirdfaq.org/faq174/
         public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
         {

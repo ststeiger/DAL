@@ -1530,9 +1530,74 @@ ORDER BY ORDINAL_POSITION
         } // End Function GetDataTable
 
 
+        public virtual System.Data.DataTable GetEntireTable(string tableName)
+        {
+            return GetEntireTable(this.DefaultSchema, tableName, false);
+        }
 
 
-        public abstract System.Data.DataTable GetEntireTable(string strTableName);
+        public virtual System.Data.DataTable GetEntireTable(string schema, string tableName)
+        {
+            return GetEntireTable(schema, tableName, false);
+        }
+
+
+        public virtual System.Data.DataTable GetEntireTable(string schema, string tableName, bool withSorting)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            if (withSorting)
+            {
+
+                using (System.Data.DataTable dt = this.GetColumnNamesForTable(tableName))
+                {
+
+                    for (int i = 0; i < dt.Rows.Count; ++i)
+                    {
+                        sb.Append(", ");
+                        sb.Append(
+                            this.QuoteObject(
+                                System.Convert.ToString(dt.Rows[i]["COLUMN_NAME"])
+                            )
+                        );
+                    } // Next i 
+
+                } // End Using dt
+
+                sb.Remove(0, 1);
+                sb.Insert(0, " ORDER BY ");
+            } // End if (withSorting) 
+
+
+            sb.Insert(0, this.QuoteObject(tableName));
+            sb.Insert(0, ".");
+            sb.Insert(0, this.QuoteObject(schema));
+            sb.Insert(0,"SELECT * FROM ");
+            
+
+            string strSQL = sb.ToString();
+            sb.Length = 0;
+            sb = null;
+            
+            return GetDataTable(strSQL);
+        } // End Function GetEntireTable 
+
+
+        /*
+        // GetColumnDefinition
+        public override System.Data.DataTable GetColumnNamesForTable(string strTableName)
+        {
+            strTableName = strTableName.Replace("'", "''");
+
+            string strSQL = @"
+SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = N'" + strTableName + @"' 
+ORDER BY TABLE_NAME, ORDINAL_POSITION 
+";
+
+            return GetDataTable(strSQL);
+        } // End Function GetColumnNamesForTable
+        */
 
 
         public virtual System.Data.DataSet GetDataSet(System.Data.IDbCommand cmd)
@@ -3054,12 +3119,37 @@ ORDER BY SPECIFIC_NAME ASC
 
         }
 
+        
+        public virtual System.Data.DataTable GetRoutines()
+        {
+            return GetRoutines(null);
+        } // End Function GetRoutines
 
-        public abstract System.Data.DataTable GetRoutines();
-        public virtual System.Data.DataTable GetRoutines(string strInitialCatalog) 
-        { 
-            throw new System.NotImplementedException("GetRoutines(string strInitialCatalog)"); 
-        }
+
+        public virtual System.Data.DataTable GetRoutines(string initialCatalog)
+        {
+            if (string.IsNullOrEmpty(initialCatalog))
+                //initialCatalog = this.m_ConnectionString.Database;
+                initialCatalog = "master";
+
+
+            using (System.Data.IDbCommand cmd = CreateCommand())
+            {
+                cmd.CommandText = @"
+SELECT * 
+FROM INFORMATION_SCHEMA.routines 
+-- WHERE routine_schema = @initialCatalog 
+
+ORDER BY ROUTINE_TYPE, ROUTINE_NAME ASC 
+";
+
+                this.AddParameter(cmd, "initialCatalog", initialCatalog);
+
+                return GetDataTable(cmd, initialCatalog);
+            } // End Using cmd 
+
+        } // End Function GetRoutines
+
 
         public virtual System.Data.DataTable GetTableValuedFunctions()
         {
@@ -3086,17 +3176,74 @@ ORDER BY SPECIFIC_NAME ASC
 
         } // End Function GetTableValuedFunctions
 
+        
+        public virtual System.Data.DataTable GetColumnNames()
+        {
+            string strSQL = @"
+SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE (1=1) 
+ORDER BY TABLE_NAME, ORDINAL_POSITION 
+";
+
+            return GetDataTable(strSQL);
+        } // End Function GetColumnNames
 
 
-        public abstract System.Data.DataTable GetColumnNames();
+        public virtual System.Data.DataTable GetColumnNames(string strDb)
+        {
+            string strCatalog = strDb;
+
+            //if (string.IsNullOrEmpty(strCatalog))
+                // strCatalog = this.m_ConnectionString.Database;
+
+            using (System.Data.IDbCommand cmd = CreateCommand())
+            {
+                cmd.CommandText = @"
+SELECT * 
+FROM INFORMATION_SCHEMA.columns 
+WHERE (1=1) 
+-- AND table_schema = @strCatalog 
+ORDER BY table_name, ordinal_position 
+";
+
+                this.AddParameter(cmd, "strCatalog", strCatalog);
+
+                return GetDataTable(cmd, strDb);
+            }
+
+        } // End Function GetColumnNames
 
 
-        public abstract System.Data.DataTable GetColumnNamesForTable(string strTableName);
+        public virtual System.Data.DataTable GetColumnNamesForTable(string strTableName)
+        {
+            return GetColumnNamesForTable(strTableName, null);
+        }
+
+
+        // http://www.firebirdfaq.org/faq174/
         public virtual System.Data.DataTable GetColumnNamesForTable(string strTableName, string strDbName)
         {
-            throw new System.NotImplementedException("cDAL.GetColumnNamesForTable(string strTableName, string strDbName) not implemented for this db type.");
-            //return null;
-        }
+            string strSQL = @"
+SELECT * 
+FROM INFORMATION_SCHEMA.columns
+WHERE (1=1) 
+AND table_schema = @strSchema 
+AND table_name = @strTableName 
+ORDER BY table_name, ordinal_position
+            ";
+
+            System.Data.DataTable dt = null;
+
+            using (System.Data.IDbCommand cmd = this.CreateCommand(strSQL))
+            {
+                this.AddParameter(cmd, "strSchema", this.DefaultSchema);
+                this.AddParameter(cmd, "strTableName", strTableName);
+                
+                dt = this.GetDataTable(cmd, strDbName);
+            } // End using cmd 
+
+            return dt;
+        } // End Function GetColumnNamesForTable
 
 
         public virtual System.Data.DataTable GetRoutineParameters(string strRoutineName)
@@ -3421,6 +3568,7 @@ ROLLBACK TRANSACTION
         public abstract bool TableHasColumn(string strTableName, string strColumnName);
 
         ////////////////////////////// End Schema //////////////////////////////
+
 
         public virtual DataBaseEngine_t DBtype   // Abstract property
         {

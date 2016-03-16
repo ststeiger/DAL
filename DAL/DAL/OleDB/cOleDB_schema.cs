@@ -257,12 +257,6 @@ namespace DB.Abstraction
         } // End Function GetFunctions
 
 
-        public override System.Data.DataTable GetRoutines()
-        {
-            throw new System.NotImplementedException("cOleDB_schema.GetRoutines not implemented.");
-        } // End Function GetRoutines
-
-
         public override System.Data.DataTable GetColumnNames()
         {
             System.Data.DataTable dt = null;

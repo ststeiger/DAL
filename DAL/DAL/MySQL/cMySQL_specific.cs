@@ -108,12 +108,6 @@ namespace DB.Abstraction
         }
 
 
-        public override System.Data.DataTable GetEntireTable(string strTableName)
-        {
-            return GetDataTable("SELECT * FROM `" + strTableName.Replace("`", "``") + "`");
-        }
-
-
         public void DisableForeignKeys()
         {
             // http://gauravsohoni.wordpress.com/2009/03/09/mysql-disable-foreign-key-checks-or-constraints/

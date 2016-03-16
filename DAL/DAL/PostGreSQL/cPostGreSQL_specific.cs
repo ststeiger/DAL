@@ -456,12 +456,6 @@ namespace DB.Abstraction
         } // End Function GetConnection
 
 
-        public override System.Data.DataTable GetEntireTable(string strTableName)
-        {
-            return GetDataTable("SELECT * FROM " + this.QuoteObject( strTableName) + " ");
-        } // End Function GetEntireTable
-
-
         public void UpdateAllSequences()
         {
             //  Updates all the sequences to have a next value of max+1 excluding the list passed 
