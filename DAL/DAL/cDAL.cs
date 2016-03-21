@@ -3781,6 +3781,12 @@ ROLLBACK TRANSACTION
         } // End Function CreateInstance
 
 
+        public static cDAL CreateInstance(UniversalConnectionStringBuilder csb)
+        {
+            return CreateInstance(csb.Engine, csb.ConnectionString);
+        } // End Function CreateInstance
+
+
         public static cDAL CreateInstance(DataBaseEngine_t DataBaseEngine, string strConnectionString)
         {
             string strBaseNameSpace = typeof(cMS_SQL).Namespace;
