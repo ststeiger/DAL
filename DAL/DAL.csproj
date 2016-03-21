@@ -143,37 +143,37 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Info.txt" />
-    <Content Include="Libs\FirebirdSql.Data.FirebirdClient.dll" />
-    <Content Include="Libs\Mono.Data.Sqlite.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.cf.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v2\mysql.data.entity.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v2\mysql.visualstudio.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v2\mysql.web.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v4\mysql.data.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v4\mysql.data.entity.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v4\mysql.visualstudio.dll" />
-    <Content Include="Libs\MySQL\6.3.7\v4\mysql.web.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\de\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\es\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fi\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fr\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\ja\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Mono.Security.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\de\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\es\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fi\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fr\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\ja\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\LICENSE.txt" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Mono.Security.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.pdb" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.xml" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\zh-CN\Npgsql.resources.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Npgsql.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\policy.2.0.Npgsql.dll" />
-    <Content Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\zh-CN\Npgsql.resources.dll" />
+    <None Include="Libs\FirebirdSql.Data.FirebirdClient.dll" />
+    <None Include="Libs\Mono.Data.Sqlite.dll" />
+    <None Include="Libs\MySQL\6.3.7\v2\mysql.data.cf.dll" />
+    <None Include="Libs\MySQL\6.3.7\v2\mysql.data.dll" />
+    <None Include="Libs\MySQL\6.3.7\v2\mysql.data.entity.dll" />
+    <None Include="Libs\MySQL\6.3.7\v2\mysql.visualstudio.dll" />
+    <None Include="Libs\MySQL\6.3.7\v2\mysql.web.dll" />
+    <None Include="Libs\MySQL\6.3.7\v4\mysql.data.dll" />
+    <None Include="Libs\MySQL\6.3.7\v4\mysql.data.entity.dll" />
+    <None Include="Libs\MySQL\6.3.7\v4\mysql.visualstudio.dll" />
+    <None Include="Libs\MySQL\6.3.7\v4\mysql.web.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\de\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\es\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fi\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\fr\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\ja\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Mono.Security.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\de\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\es\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fi\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\fr\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\ja\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\LICENSE.txt" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Mono.Security.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.pdb" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\Npgsql.xml" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.2.0-net20\zh-CN\Npgsql.resources.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\Npgsql.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\policy.2.0.Npgsql.dll" />
+    <None Include="Libs\PostGreSQL\Npgsql-2.0.11-net20\zh-CN\Npgsql.resources.dll" />
     <Content Include="Libs\System.Data.SQLite.x32.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -206,8 +206,8 @@
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <Content Include="Libs\SQLite.Interop.x64.dll" />
-    <Content Include="Libs\SQLite.Interop.x32.dll" />
+    <None Include="Libs\SQLite.Interop.x64.dll" />
+    <None Include="Libs\SQLite.Interop.x32.dll" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -237,7 +237,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="YearStamp.MonthStamp.DayStamp.TimeStamp" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_BuildVersioningStyle="YearStamp.MonthStamp.DayStamp.TimeStamp" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
