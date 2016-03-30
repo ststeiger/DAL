@@ -90,6 +90,7 @@
     <Compile Include="DAL\GenericExtensions.cs" />
     <Compile Include="DAL\IEnumerableExtensions.cs" />
     <Compile Include="DAL\MS_SQL\cMS_SQL_keywords.cs" />
+    <Compile Include="DAL\MS_SQL\TODO_LargeFileSave.cs" />
     <Compile Include="DAL\PasswordEncryption.cs" />
     <Compile Include="DAL\ScriptSplitter.cs" />
     <Compile Include="DAL\SQLite\cSQLite_schema.cs" />
@@ -237,7 +238,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_BuildVersioningStyle="YearStamp.MonthStamp.DayStamp.TimeStamp" />
+      <UserProperties BuildVersion_BuildVersioningStyle="YearStamp.MonthStamp.DayStamp.TimeStamp" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
