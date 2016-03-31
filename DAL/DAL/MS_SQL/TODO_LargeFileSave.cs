@@ -31,7 +31,7 @@ SELECT
 	,@__DK_Bezeichnung AS DK_Bezeichnung -- varchar(50)
 	,@__DK_Datei AS DK_Datei -- varchar(255)
 	,'.png' AS DK_Dateiformat -- varchar(25)
-	,1 AS DK_Status -- int
+	,666 AS DK_Status -- int
 	,1 AS DK_IsUpload -- bit
 	,0 AS DK_IsDefault -- bit
 	,@__file AS DK_File -- varbinary(max)
@@ -41,7 +41,10 @@ SELECT
 ;
 
 ";
-            // byte[] ba = System.IO.File.ReadAllBytes(fileName);
+            byte[] ba = System.IO.File.ReadAllBytes(@"D:\Stefan.Steiger\Pictures\Physical_world.svg");
+
+
+
 
             using (System.Data.IDbCommand cmd = SQL.CreateCommand(strSQL))
             {
@@ -49,11 +52,19 @@ SELECT
                 SQL.AddParameter(cmd, "__DK_Bezeichnung", "Test1");
                 SQL.AddParameter(cmd, "__DK_Datei", "Test2");
 
-                SQL.SaveFile(fileName, cmd);
-                // SQL.SaveFile(ba, cmd);
+                // SQL.SaveFile(fileName, cmd);
+                SQL.SaveFile(ba, cmd);
             } // End Using cmd
 
+            strSQL = @"
+SELECT * 
+  -- DELETE 
+FROM T_AP_Dokumente 
+WHERE DK_Status = 666   
+";
 
+
+            SQL.RetrieveFile(strSQL, @"D:\testnew.svg", "DK_File");
         } // End Sub SaveFile
     }
 
@@ -235,26 +246,18 @@ SELECT
         // http://stackoverflow.com/questions/2885335/clr-sql-assembly-get-the-bytestream
         // http://stackoverflow.com/questions/891617/how-to-read-a-image-by-idatareader
         // http://stackoverflow.com/questions/4103406/extracting-a-net-assembly-from-sql-server-2005
-        public static void RetrieveFile(string fileName, string path)
+        public static void RetrieveFile(string sql, string path)
         {
-            string sql = @"
---DECLARE @__filename nvarchar(255) 
---SET @__filename = N'someFile.png' 
+            RetrieveFile(sql, path, "data");
+        } // End Sub RetrieveFile 
 
-SELECT 
-	 uid
-	,data
-	,filename
-FROM T_Files
-WHERE filename = @__filename 
-";
 
+        public static void RetrieveFile(string sql, string path, string columnName)
+        {
 
             using (System.Data.IDbCommand cmd = CreateCommand(sql, 0))
             {
-                SQL.AddParameter(cmd, "__filename", fileName);
-
-                RetrieveFile(cmd, "data", @"D:\someFile.png");
+                RetrieveFile(cmd, columnName, path);
             } // End Using cmd 
 
         } // End Sub RetrieveFile 
