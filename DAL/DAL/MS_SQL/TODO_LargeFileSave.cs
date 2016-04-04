@@ -44,8 +44,6 @@ SELECT
             byte[] ba = System.IO.File.ReadAllBytes(@"D:\Stefan.Steiger\Pictures\Physical_world.svg");
 
 
-
-
             using (System.Data.IDbCommand cmd = SQL.CreateCommand(strSQL))
             {
                 SQL.AddParameter(cmd, "__DK_Objekt_UID", "66666666-6666-6666-6666-666666666667");
@@ -72,6 +70,37 @@ WHERE DK_Status = 666
 
     internal class SQL
     {
+
+        public static System.Data.Common.DbProviderFactory GetFactory(System.Type type)
+        {
+            if (type != null && type.IsSubclassOf(typeof(System.Data.Common.DbProviderFactory)))
+            {
+                // Provider factories are singletons with Instance field having
+                // the sole instance
+                System.Reflection.FieldInfo field = type.GetField("Instance"
+                    , System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                );
+
+                if (field != null)
+                {
+                    return (System.Data.Common.DbProviderFactory)field.GetValue(null);
+                    //return field.GetValue(null) as DbProviderFactory;
+                } // End if (field != null)
+
+            } // End if (type != null && type.IsSubclassOf(typeof(System.Data.Common.DbProviderFactory)))
+
+            throw new System.Configuration.ConfigurationErrorsException("DataProvider is missing!");
+            //throw new System.Configuration.ConfigurationException("DataProvider is missing!");
+        } // End Function GetFactory
+
+        public static System.Data.Common.DbProviderFactory InitializeFactory()
+        {
+            return GetFactory(typeof(Npgsql.NpgsqlFactory));
+            //return GetFactory(typeof(System.Data.SqlClient.SqlClientFactory));
+        }
+
+        public static System.Data.Common.DbProviderFactory m_fact = InitializeFactory();
+
 
 
         public static bool Log(System.Exception ex)
@@ -112,7 +141,7 @@ WHERE DK_Status = 666
         } // End Function Notify 
 
 
-        public static string GetConnectionString()
+        public static string GetMsConnectionString()
         {
             System.Data.SqlClient.SqlConnectionStringBuilder csb = new System.Data.SqlClient.SqlConnectionStringBuilder();
             csb.IntegratedSecurity = true;
@@ -130,9 +159,39 @@ WHERE DK_Status = 666
         } // End Function GetConnectionString 
 
 
+        public static string GetPgConnectionString()
+        {
+            string str = @"CREATE ROLE stackexchangeimporter LOGIN PASSWORD '123' 
+SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
+";
+
+            Npgsql.NpgsqlConnectionStringBuilder csb = new Npgsql.NpgsqlConnectionStringBuilder();
+            csb.UserName = "stackexchangeimporter";
+            csb.Password = "123";
+            csb.Port = 5432;
+            csb.Database = "startups";
+            csb.Host = "127.0.0.1";
+
+            return csb.ToString();
+        } // End Function GetConnectionString
+
+
+
+        public static string GetConnectionString()
+        {
+            if (SQL.m_fact is System.Data.SqlClient.SqlClientFactory)
+                return GetMsConnectionString();
+
+            return GetPgConnectionString();
+        }
+
+
         public static System.Data.Common.DbConnection GetConnection()
         {
-            return new System.Data.SqlClient.SqlConnection(GetConnectionString());
+            System.Data.Common.DbConnection dbConnection = m_fact.CreateConnection();
+            dbConnection.ConnectionString = GetConnectionString();
+
+            return dbConnection;
         } // End Function GetConnection 
 
 
@@ -168,7 +227,9 @@ WHERE DK_Status = 666
 
         public static System.Data.Common.DbCommand CreateCommand(string SQL, int timeout)
         {
-            System.Data.Common.DbCommand cmd = new System.Data.SqlClient.SqlCommand(SQL);
+
+            System.Data.Common.DbCommand cmd = m_fact.CreateCommand();
+            cmd.CommandText = SQL;
             cmd.CommandTimeout = timeout;
 
             return cmd;
@@ -439,7 +500,7 @@ WHERE DK_Status = 666
         {
             System.Data.DataTable dt = new System.Data.DataTable();
 
-            using (System.Data.IDbConnection idbc = GetConnection())
+            using (System.Data.Common.DbConnection idbc = GetConnection())
             {
 
                 lock (idbc)
@@ -452,7 +513,7 @@ WHERE DK_Status = 666
                         {
                             cmd.Connection = idbc;
 
-                            using (System.Data.Common.DbDataAdapter daQueryTable = new System.Data.SqlClient.SqlDataAdapter())
+                            using (System.Data.Common.DbDataAdapter daQueryTable = m_fact.CreateDataAdapter())
                             {
                                 daQueryTable.SelectCommand = (System.Data.Common.DbCommand)cmd;
                                 daQueryTable.Fill(dt);
@@ -739,8 +800,6 @@ VALUES
 
                 using (System.Data.IDbTransaction trn = con.BeginTransaction())
                 {
-                    //using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(strSQL, con))
-
                     using (System.Data.IDbCommand cmd = SQL.CreateCommand(strSQL))
                     {
                         cmd.Connection = con;
@@ -772,7 +831,6 @@ VALUES
                         // System.Data.SqlClient.SqlParameter dataParam = cmd.Parameters.Add("@data", System.Data.SqlDbType.VarBinary);
                         // System.Data.SqlClient.SqlParameter lengthParam = cmd.Parameters.Add("@length", System.Data.SqlDbType.Int);
                         // System.Data.SqlClient.SqlParameter fileNameParam = cmd.Parameters.Add("@fileName", System.Data.SqlDbType.NVarChar);
-
 
 
 
@@ -827,50 +885,67 @@ VALUES
 
             string constr = SQL.GetConnectionString();
 
-            using (System.Data.SqlClient.SqlConnection con = new System.Data.SqlClient.SqlConnection(constr))
-            using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(sql, con))
+            using (System.Data.IDbConnection con = SQL.GetConnection())
             {
-                cmd.CommandText = sql;
-
-                System.Data.SqlClient.SqlParameter dataParam = cmd.Parameters.Add("@data", System.Data.SqlDbType.VarBinary);
-                System.Data.SqlClient.SqlParameter lengthParam = cmd.Parameters.Add("@length", System.Data.SqlDbType.Int);
-                System.Data.SqlClient.SqlParameter fileNameParam = cmd.Parameters.Add("@fileName", System.Data.SqlDbType.NVarChar);
-
-                fileNameParam.Value = fileName;
-
-
-                if (con.State != System.Data.ConnectionState.Open)
-                    con.Open();
-
-
-                using (System.IO.Stream fs = new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                using (System.Data.IDbCommand cmd = SQL.CreateCommand(sql))
                 {
-                    int readBytes = 0;
-                    long fileSize = fs.Length;
-                    long cIndex = 0;
+                    cmd.CommandText = sql;
 
-                    while (cIndex < fileSize)
+                    //cmd.Parameters.Add("@data", System.Data.SqlDbType.VarBinary);
+                    System.Data.IDbDataParameter dataParam = cmd.CreateParameter();
+                    dataParam.ParameterName = "@data";
+                    dataParam.DbType = System.Data.DbType.Binary;
+
+                        
+
+                    System.Data.IDbDataParameter lengthParam = cmd.CreateParameter();
+                        //cmd.Parameters.Add("@length", System.Data.SqlDbType.Int);
+                    dataParam.ParameterName = "@length";
+                    dataParam.DbType = System.Data.DbType.Int32;
+
+
+                    System.Data.IDbDataParameter fileNameParam = cmd.CreateParameter();
+                        //cmd.Parameters.Add("@fileName", System.Data.SqlDbType.NVarChar);
+                    dataParam.ParameterName = "@length";
+                    dataParam.DbType = System.Data.DbType.Int32;
+
+                    fileNameParam.Value = fileName;
+
+
+                    if (con.State != System.Data.ConnectionState.Open)
+                        con.Open();
+
+
+                    using (System.IO.Stream fs = new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read))
                     {
-                        if (cIndex + buffer.Length > fileSize)
-                            readBytes = (int)(fileSize - cIndex);
-                        else
-                            readBytes = buffer.Length;
+                        int readBytes = 0;
+                        long fileSize = fs.Length;
+                        long cIndex = 0;
+
+                        while (cIndex < fileSize)
+                        {
+                            if (cIndex + buffer.Length > fileSize)
+                                readBytes = (int)(fileSize - cIndex);
+                            else
+                                readBytes = buffer.Length;
 
 
 
-                        fs.Read(buffer, 0, readBytes);
+                            fs.Read(buffer, 0, readBytes);
 
-                        dataParam.Value = buffer;
-                        dataParam.Size = readBytes;
-                        lengthParam.Value = readBytes;
+                            dataParam.Value = buffer;
+                            dataParam.Size = readBytes;
+                            lengthParam.Value = readBytes;
 
-                        cmd.ExecuteNonQuery();
-                        cIndex += buffer.Length;
-                    } // Whend
+                            cmd.ExecuteNonQuery();
+                            cIndex += buffer.Length;
+                        } // Whend
 
-                } // End Using fs 
+                    } // End Using fs 
 
-            } // End Using cmd
+                } // End Using cmd
+
+            } // End Using con 
 
         } // End Sub SqlServerLargeFileChuncked
 
