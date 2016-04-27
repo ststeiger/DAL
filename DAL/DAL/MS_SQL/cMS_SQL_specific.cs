@@ -218,12 +218,31 @@ namespace DB.Abstraction
         {
             try
             {
+                string sanitizedTableName = this.QuoteObjectWhereNecessary(strDestinationTable);
 
-                strDestinationTable = "[" + strDestinationTable + "]";
-
+                // Ensure table is empty - and throw on foreign-key
                 if (bWithDelete)
                 {
-                    this.Execute("DELETE FROM " + strDestinationTable.Replace("'", "''"));
+                    this.Execute("DELETE FROM " + sanitizedTableName);
+                }
+
+
+
+                System.Collections.Generic.List<string> lsComputedColumns = null;
+
+                using (System.Data.IDbCommand cmd = CreateCommand(@"
+SELECT syscc.name FROM sys.objects AS syso
+INNER JOIN sys.computed_columns  AS syscc ON syscc.object_id =  syso.object_id 
+WHERE (1=1) 
+AND syso.name = @__destTable 
+AND syso.type = 'U '
+AND syscc.is_computed = 1 
+-- AND syscc.is_persisted = 1 
+-- syscc.definition 
+"))
+                {
+                    this.AddParameter(cmd, "__destTable", strDestinationTable);
+                    lsComputedColumns = this.GetList<string>(cmd);
                 }
 
 
@@ -237,10 +256,13 @@ namespace DB.Abstraction
                 System.Data.SqlClient.SqlBulkCopy BulkCopyInstance = new System.Data.SqlClient.SqlBulkCopy(this.m_ConnectionString.ConnectionString, bcoOptions);
                 foreach (System.Data.DataColumn dc in dt.Columns)
                 {
+                    // The column "foo" cannot be modified because it is either a computed column or...
+                    if (MyExtensionMethods.Contains(lsComputedColumns, dc.ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                        continue;
 
-                    BulkCopyInstance.ColumnMappings.Add(dc.ColumnName, "[" + dc.ColumnName + "]");
+                    BulkCopyInstance.ColumnMappings.Add(dc.ColumnName, "[" + dc.ColumnName.Replace("]", "]]") + "]");
                 }
-                BulkCopyInstance.DestinationTableName = strDestinationTable;
+                BulkCopyInstance.DestinationTableName = sanitizedTableName;
 
                 /*
                 string strSQL = "INSERT INTO " + BulkCopyInstance.DestinationTableName + Environment.NewLine + "(" + Environment.NewLine;

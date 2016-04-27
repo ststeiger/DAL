@@ -3,7 +3,7 @@ namespace DB.Abstraction
 {
 
 
-    public static class MyExtensionMethods
+    internal static class MyExtensionMethods
     {
 
         //public static bool Contains(this List<string> ls, string strValueToSearch, System.StringComparer cmp)
