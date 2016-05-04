@@ -1530,6 +1530,265 @@ ORDER BY ORDINAL_POSITION
         } // End Function GetDataTable
 
 
+        public enum SerializationFormat_t : int
+        { 
+            JSON,
+            XML
+        }
+
+
+        public virtual void SerializeTable(SerializationFormat_t serializationFormat, string fileName, string tableSchema, string tableName)
+        {
+            if (serializationFormat == SerializationFormat_t.JSON)
+            {
+                SerializeTableAsJson(fileName, tableSchema, tableName);
+                return;
+            }
+
+
+            if (serializationFormat == SerializationFormat_t.XML)
+            {
+                SerializeTableAsXml(fileName, tableSchema, tableName);
+                return;
+            }
+
+            throw new System.Exception("SerializeTable: Unknown serialization format.");
+        }
+
+
+        public virtual void SerializeTable(SerializationFormat_t serializationFormat, string fileName, string tableName)
+        {
+            SerializeTable(serializationFormat, fileName, this.DefaultSchema, tableName);
+        }
+
+
+        public virtual void SerializeTable(SerializationFormat_t serializationFormat, System.IO.Stream target, string tableSchema, string tableName)
+        {
+
+            if (serializationFormat == SerializationFormat_t.JSON)
+            {
+                SerializeTableAsJson(target, tableSchema, tableName);
+                return;
+            }
+
+
+            if (serializationFormat == SerializationFormat_t.XML)
+            {
+                SerializeTableAsXml(target, tableSchema, tableName);
+                return;
+            }
+
+            throw new System.Exception("SerializeTable: Unknown serialization format.");
+        }
+
+
+        public virtual void SerializeTableAsJson(string fileName, string tableName)
+        {
+            SerializeTableAsJson(fileName, this.DefaultSchema, tableName);
+        } // End Sub SerializeTableAsJson
+
+
+        public virtual void SerializeTableAsJson(string fileName, string tableSchema, string tableName)
+        {
+            using (System.IO.FileStream fs = new System.IO.FileStream(fileName
+                , System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
+            {
+                SerializeTableAsJson(fs, tableSchema, tableName);
+            } // End Using fs
+
+        } // End Sub SerializeTableAsJson
+
+
+
+
+        public virtual void SerializeTableAsJson(System.IO.Stream fs, string tableSchema, string tableName)
+        {
+            using (System.IO.StreamWriter sw = new System.IO.StreamWriter(fs, System.Text.Encoding.UTF8))
+            {
+                SerializeTableAsJson(sw, tableSchema, tableName);
+            } // End Using  sw
+
+        } // End Sub SerializeTableAsJson
+
+
+        public virtual void SerializeTableAsJson(System.IO.StreamWriter sw, string tableSchema, string tableName)
+        {
+            bool bOmitNullValues = false;
+            bool bPrettyPrint = true;
+            Newtonsoft.Json.JsonSerializer ser = new Newtonsoft.Json.JsonSerializer();
+
+            using (Newtonsoft.Json.JsonTextWriter jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw))
+            {
+                jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+
+                if (bPrettyPrint)
+                    jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
+                else
+                    jsonWriter.Formatting = Newtonsoft.Json.Formatting.None;
+
+                jsonWriter.WriteStartArray();
+
+
+                using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
+                      "SELECT * FROM " + this.QuoteObject(tableName) + ";"
+                    , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
+                {
+                    if (dr.HasRows)
+                    {
+                        int fieldCount = dr.FieldCount;
+
+                        while (dr.Read())
+                        {
+                            jsonWriter.WriteStartObject();
+
+                            for (int i = 0; i < fieldCount; ++i)
+                            {
+
+                                object obj = dr.GetValue(i);
+                                if (obj == null)
+                                    continue;
+
+                                System.Type t = obj.GetType();
+
+                                if (bOmitNullValues)
+                                {
+                                    if (object.ReferenceEquals(t, typeof(System.DBNull)))
+                                        continue;
+                                } // End if (bOmitNullValues)
+
+                                /*
+                                if (object.ReferenceEquals(t, typeof(System.DateTime)))
+                                {
+                                    System.DateTime dt = (System.DateTime)obj;
+                                    obj = dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff", System.Globalization.CultureInfo.InvariantCulture);
+                                } // End if (object.ReferenceEquals(obj.GetType(), typeof(System.DateTime)))
+                                */
+                                 
+                                string colName = dr.GetName(i);
+                                jsonWriter.WritePropertyName(colName);
+                                jsonWriter.WriteValue(obj);
+                            } // Next i
+
+                            jsonWriter.WriteEndObject();
+                        } // Whend while (dr.Read())
+
+                    } // End if (dr.HasRows)
+
+                } // End using dr 
+
+                jsonWriter.WriteEnd(); // WriteRaw("]", fs);
+                jsonWriter.Flush();
+                sw.Flush();
+            } // End Using jsonWriter 
+
+        } // End Sub SerializeTableAsJson
+
+
+        public virtual void SerializeTableAsXml(System.IO.Stream target, string tableName)
+        {
+            SerializeTableAsXml(target, this.DefaultSchema, tableName);
+        } // End Sub SerializeTableAsXml 
+
+
+        public virtual void SerializeTableAsXml(string fileName, string tableSchema, string tableName)
+        {
+            using (System.IO.FileStream fs = new System.IO.FileStream(fileName
+                , System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
+            {
+                SerializeTableAsXml(fs, tableSchema, tableName);
+                fs.Flush();
+                fs.Close();
+            } // End Using fs
+
+        } // End Sub SerializeTableAsXml
+
+
+        public virtual void SerializeTableAsXml(string fileName, string tableName)
+        {
+            SerializeTableAsJson(fileName, this.DefaultSchema, tableName);
+        } // End Sub SerializeTableAsXml
+
+
+        // public static void SimpleTableSerializer(System.IO.TextWriter target)
+        public virtual void SerializeTableAsXml(System.IO.Stream target, string schema, string tableName)
+        {
+            if (string.IsNullOrEmpty(tableName))
+                throw new System.ArgumentNullException("tableName is NULL");
+
+            if (null == target)
+                throw new System.ArgumentNullException("target is NULL");
+
+            System.Xml.XmlWriterSettings settings = new System.Xml.XmlWriterSettings()
+            {
+                 Encoding = System.Text.Encoding.UTF8
+                ,Indent = true
+                ,IndentChars = "  "
+                 // Make it Windows-Readable
+                ,NewLineChars = "\r\n" // System.Environment.NewLine
+            };
+            
+
+            using (System.Xml.XmlWriter writer = System.Xml.XmlWriter.Create(target, settings))
+            {
+                writer.WriteStartElement("rows");
+
+                using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
+                     "SELECT * FROM " + this.QuoteObject(tableName) + ";"
+                    , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection
+                    ))
+                {
+                    if (dr.HasRows)
+                    {
+                        int fieldCount = dr.FieldCount;
+
+                        while (dr.Read())
+                        {
+                            writer.WriteStartElement("row");
+
+                            for (int i = 0; i < fieldCount; ++i)
+                            {
+
+                                object obj = dr.GetValue(i);
+                                if (obj == null)
+                                    continue;
+
+                                System.Type t = obj.GetType();
+                                if (object.ReferenceEquals(t, typeof(System.DBNull)))
+                                    continue;
+
+                                if (object.ReferenceEquals(t, typeof(System.DateTime)))
+                                {
+                                    System.DateTime dt = (System.DateTime)obj;
+                                    obj = dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff", System.Globalization.CultureInfo.InvariantCulture);
+                                } // End if (object.ReferenceEquals(obj.GetType(), typeof(System.DateTime)))
+                                else if (object.ReferenceEquals(t, typeof(System.Guid)))
+                                {
+                                    System.Guid uid = (System.Guid)obj;
+                                    obj = uid.ToString();
+                                } // else if (object.ReferenceEquals(t, typeof(System.Guid)))
+
+                                string colName = dr.GetName(i);
+                                string xmlColName = colName.Replace(" ", "_x0020_");
+                                writer.WriteStartAttribute(xmlColName);
+                                writer.WriteValue(obj);
+                                writer.WriteEndAttribute();
+                            } // Next i
+
+                            writer.WriteEndElement();
+                        } // Whend while (dr.Read())
+
+                    } // End if (dr.HasRows)
+
+                } // End using dr 
+
+                writer.WriteEndElement();
+                target.Flush();
+            } // End Using writer
+
+        } // End Sub SerializeTableAsXml
+
+
+
         public virtual System.Data.DataTable GetEntireTable(string tableName)
         {
             return GetEntireTable(this.DefaultSchema, tableName, false);
@@ -1660,7 +1919,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         } // End Function GetDataSet
 
 
-        public virtual System.Data.IDataReader ExecuteReader(System.Data.IDbCommand cmd)
+        public virtual System.Data.IDataReader ExecuteReader(System.Data.IDbCommand cmd, System.Data.CommandBehavior cmdBehaviour)
         {
             System.Data.IDataReader idr = null;
 
@@ -1674,7 +1933,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
                 try
                 {
-                    idr = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
+                    idr = cmd.ExecuteReader(cmdBehaviour);
                 }
                 catch (System.Exception ex)
                 {
@@ -1687,13 +1946,25 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         } // End Function ExecuteReader
 
 
+        public virtual System.Data.IDataReader ExecuteReader(System.Data.IDbCommand cmd)
+        {
+            return ExecuteReader(cmd, System.Data.CommandBehavior.CloseConnection);
+        } // End Function ExecuteReader
+
+
         public virtual System.Data.IDataReader ExecuteReader(string strSQL)
+        {
+            return ExecuteReader(strSQL, System.Data.CommandBehavior.CloseConnection);
+        } // End Function ExecuteReader
+
+
+        public virtual System.Data.IDataReader ExecuteReader(string strSQL, System.Data.CommandBehavior cmdBehaviour)
         {
             System.Data.IDataReader idr = null;
 
             using (System.Data.IDbCommand cmd = this.CreateCommand(strSQL))
             {
-                idr = ExecuteReader(cmd);
+                idr = ExecuteReader(cmd, cmdBehaviour);
             } // End Using cmd
 
             return idr;
@@ -1702,14 +1973,26 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
         public virtual System.Data.Common.DbDataReader ExecuteDbReader(System.Data.IDbCommand cmd)
         {
-            return (System.Data.Common.DbDataReader)ExecuteReader(cmd);
-        } // End Function ExecuteReader
+            return (System.Data.Common.DbDataReader)ExecuteReader(cmd, System.Data.CommandBehavior.CloseConnection);
+        } // End Function ExecuteDbReader
+
+
+        public virtual System.Data.Common.DbDataReader ExecuteDbReader(System.Data.IDbCommand cmd, System.Data.CommandBehavior cmdBehaviour)
+        {
+            return (System.Data.Common.DbDataReader)ExecuteReader(cmd, cmdBehaviour);
+        } // End Function ExecuteDbReader
 
 
         public virtual System.Data.Common.DbDataReader ExecuteDbReader(string strSQL)
         {
-            return (System.Data.Common.DbDataReader)ExecuteReader(strSQL);
-        } // End Function ExecuteReader
+            return (System.Data.Common.DbDataReader)ExecuteReader(strSQL, System.Data.CommandBehavior.CloseConnection);
+        } // End Function ExecuteDbReader
+
+
+        public virtual System.Data.Common.DbDataReader ExecuteDbReader(string strSQL, System.Data.CommandBehavior cmdBehaviour)
+        {
+            return (System.Data.Common.DbDataReader)ExecuteReader(strSQL, cmdBehaviour);
+        } // End Function ExecuteDbReader
 
 
         public virtual object ExecuteStoredProcedure(System.Data.IDbCommand cmd)
