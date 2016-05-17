@@ -1630,7 +1630,7 @@ ORDER BY ORDINAL_POSITION
 
 
                 using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
-                      "SELECT * FROM " + this.QuoteObject(tableName) + ";"
+                      "SELECT * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
                     , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
                 {
                     if (dr.HasRows)
@@ -1663,7 +1663,7 @@ ORDER BY ORDINAL_POSITION
                                     obj = dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff", System.Globalization.CultureInfo.InvariantCulture);
                                 } // End if (object.ReferenceEquals(obj.GetType(), typeof(System.DateTime)))
                                 */
-                                 
+
                                 string colName = dr.GetName(i);
                                 jsonWriter.WritePropertyName(colName);
                                 jsonWriter.WriteValue(obj);
@@ -1710,7 +1710,7 @@ ORDER BY ORDINAL_POSITION
 
 
         // public static void SimpleTableSerializer(System.IO.TextWriter target)
-        public virtual void SerializeTableAsXml(System.IO.Stream target, string schema, string tableName)
+        public virtual void SerializeTableAsXml(System.IO.Stream target, string tableSchema, string tableName)
         {
             if (string.IsNullOrEmpty(tableName))
                 throw new System.ArgumentNullException("tableName is NULL");
@@ -1733,7 +1733,7 @@ ORDER BY ORDINAL_POSITION
                 writer.WriteStartElement("rows");
 
                 using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
-                     "SELECT * FROM " + this.QuoteObject(tableName) + ";"
+                     "SELECT * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
                     , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection
                     ))
                 {
