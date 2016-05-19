@@ -1611,7 +1611,123 @@ ORDER BY ORDINAL_POSITION
         } // End Sub SerializeTableAsJson
 
 
+
+
+
+
+
+
+        public static string GetAssemblyQualifiedNoVersionName(string input)
+        {
+            int i = 0;
+            bool isNotFirst = false;
+            for (; i < input.Length; ++i)
+            {
+                if (input[i] == ',')
+                {
+                    if (isNotFirst)
+                        break;
+
+                    isNotFirst = true;
+                }
+            }
+
+            return input.Substring(0, i);
+        }
+
+
         public virtual void SerializeTableAsJson(System.IO.StreamWriter sw, string tableSchema, string tableName)
+        {
+            bool bPrettyPrint = true;
+            Newtonsoft.Json.JsonSerializer ser = new Newtonsoft.Json.JsonSerializer();
+
+
+            string str = "SELECT * FROM " + this.QuoteObjectWhereNecessary(tableSchema) + "."
+                + this.QuoteObjectWhereNecessary(tableName) + " WHERE (1=2); ";
+
+            using (System.Data.DataTable dt = this.GetDataTable(str))
+            {
+
+                using (Newtonsoft.Json.JsonTextWriter jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw))
+                {
+                    // WARNING: ISO will not deserialize properly...
+                    // jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+                    jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.MicrosoftDateFormat;
+
+                    if (bPrettyPrint)
+                        jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
+                    else
+                        jsonWriter.Formatting = Newtonsoft.Json.Formatting.None;
+
+
+
+                    jsonWriter.WriteStartObject();
+
+                    jsonWriter.WritePropertyName("TableName");
+                    jsonWriter.WriteValue(dt.TableName);
+
+                    jsonWriter.WritePropertyName("Columns");
+                    jsonWriter.WriteStartArray();
+
+                    foreach (System.Data.DataColumn column in dt.Columns)
+                    {
+                        jsonWriter.WriteStartObject();
+
+                        jsonWriter.WritePropertyName("ColumnName");
+                        jsonWriter.WriteValue(column.ColumnName);
+
+                        jsonWriter.WritePropertyName("DataType");
+                        jsonWriter.WriteValue(GetAssemblyQualifiedNoVersionName(column.DataType.AssemblyQualifiedName));
+
+                        // jsonWriter.WritePropertyName("DateTimeMode");
+                        // jsonWriter.WriteValue(column.DateTimeMode.ToString());
+
+                        jsonWriter.WriteEndObject();
+                    } // Next column 
+
+                    jsonWriter.WriteEndArray();
+
+                    jsonWriter.WritePropertyName("Rows");
+                    jsonWriter.WriteStartArray();
+
+
+                    using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
+                          "SELECT TOP 100 * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
+                        , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
+                    {
+                        if (dr.HasRows)
+                        {
+                            int fieldCount = dr.FieldCount;
+
+                            while (dr.Read())
+                            {
+                                jsonWriter.WriteStartArray();
+
+                                for (int i = 0; i < fieldCount; ++i)
+                                {
+                                    object obj = dr.GetValue(i);
+                                    jsonWriter.WriteValue(obj);
+                                } // Next i
+
+                                jsonWriter.WriteEndArray();
+                            } // Whend while (dr.Read())
+
+                        } // End if (dr.HasRows)
+
+                    } // End using dr 
+                    jsonWriter.WriteEndArray();
+
+                    jsonWriter.WriteEndObject();
+                    jsonWriter.Flush();
+                    sw.Flush();
+                } // End Using jsonWriter
+
+            } // End Using dt 
+
+        } // End Sub SerializeTableAsJson
+
+
+        public virtual void SerializeTableAsJsonWithoutSchema(System.IO.StreamWriter sw, string tableSchema, string tableName)
         {
             bool bOmitNullValues = false;
             bool bPrettyPrint = true;
@@ -1619,8 +1735,10 @@ ORDER BY ORDINAL_POSITION
 
             using (Newtonsoft.Json.JsonTextWriter jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw))
             {
-                jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
-
+                // WARNING: ISO will not deserialize properly...
+                // jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+                jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.MicrosoftDateFormat;
+                
                 if (bPrettyPrint)
                     jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
                 else
@@ -2651,15 +2769,345 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         }
 
 
-        public virtual bool BulkCopy(string strDestinationTable, System.Data.DataTable dt)
+
+        /// //////////////////////////////////////////////
+
+
+
+
+        public virtual void DebugBulkCopy(string tableName, System.Data.DataTable dt, bool bWithDelete)
+        {
+            DebugBulkCopy(this.DefaultSchema, tableName, dt, bWithDelete);
+        }
+
+
+        // DAL.DebugBulkCopy("dbo.T_Benutzer", dt, true)
+        public virtual void DebugBulkCopy(string tableSchema, string strDestinationTable, System.Data.DataTable dt, bool bWithDelete)
+        {
+            string strLogFilePath = null;
+            //"d:\temp\loginsert.sql"
+
+            string strSQL = "";
+            if (bWithDelete)
+            {
+                strSQL += "DELETE FROM " + this.QuoteObjectWhereNecessary(strDestinationTable) + "; " + System.Environment.NewLine + System.Environment.NewLine;
+                this.ExecuteNonQuery(strSQL);
+            }
+
+
+            System.Collections.Generic.List<string> lsComputedColumns = GetComputedColumnNames(tableSchema, strDestinationTable);
+            string sSqlInserts = string.Empty;
+            System.Text.StringBuilder sbSqlStatements = new System.Text.StringBuilder();
+
+
+            string strSQLGetColumns = "SELECT * FROM " + this.QuoteObjectWhereNecessary(tableSchema) +"."+ this.QuoteObjectWhereNecessary(strDestinationTable) + " WHERE (1=2); ";
+            using (System.Data.DataTable dtColumns = this.GetDataTable(strSQLGetColumns))
+            {
+                // create the columns portion of the INSERT statement
+                string sColumns = string.Empty;
+
+                foreach (System.Data.DataColumn dc in dtColumns.Columns)
+                {
+                    if (MyExtensionMethods.Contains(lsComputedColumns, dc.ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                        continue;
+
+                    if (sColumns != string.Empty)
+                        sColumns += ", ";
+
+                    sColumns += this.QuoteObjectWhereNecessary(dc.ColumnName);
+                }
+
+                //string form = string.Format("INSERT INTO {0}.{1}({2}) VALUES ( ", tableSchema, strDestinationTable, sColumns);
+                string form = "INSERT INTO " + tableSchema + "." + strDestinationTable + " ( " + sColumns + " ) VALUES ( \r\n";
+                bool bDebug = true;
+
+
+                BatchedInsert(dt, delegate(System.Text.StringBuilder sb, System.Data.DataRow dr)
+                {
+                    sb.Append(form);
+
+                    bool bFirst = true;
+                    foreach (System.Data.DataColumn dc in dtColumns.Columns)
+                    {
+                        if (MyExtensionMethods.Contains(lsComputedColumns, dc.ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                            continue;
+
+                        if (bFirst)
+                            bFirst = false;
+                        else
+                            sb.Append(", ");
+
+                        // need to do a case to check the column-value types
+                        // (quote strings(check for dups first), convert bools)
+                        string sType = string.Empty;
+                        try
+                        {
+                            sb.Append(GetInsertText(dr[dc.ColumnName], dc.DataType));
+
+                            if (bDebug)
+                            {
+                                sb.Append(" -- ");
+                                sb.Append(dc.ColumnName);
+                            }
+
+                            sb.Append("\r\n");
+                        }
+                        catch(System.Exception ex)
+                        {
+                            System.Console.WriteLine(ex.Message);
+                            throw;
+                        }
+                    } // Next dc
+
+                    sb.AppendLine(");");
+                });
+
+            }
+
+        } // DebugBulkCopy
+
+
+        public string GetInsertText(object obj, System.Type t)
+        {
+            if (obj == null || obj == System.DBNull.Value)
+                return "NULL";
+
+            if (object.ReferenceEquals(t, typeof(System.DateTime)))
+                return this.Insert_DateTime(obj);
+
+            if (object.ReferenceEquals(t, typeof(byte[])))
+                return "0x" + ByteToHexBitFiddle((byte[])obj);
+
+            return this.Insert_Unicode(obj);
+        }
+
+
+        private static string ByteToHexBitFiddle(byte[] bytes)
+        {
+            char[] c = new char[bytes.Length * 2];
+            int b;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                b = bytes[i] >> 4;
+                c[i * 2] = (char)(55 + b + (((b - 10) >> 31) & -7));
+                b = bytes[i] & 0xF;
+                c[i * 2 + 1] = (char)(55 + b + (((b - 10) >> 31) & -7));
+            }
+
+            return new string(c);
+        }
+
+
+
+        public virtual System.Collections.Generic.List<string> GetComputedColumnNames(string tableSchema, string tableName)
+        {
+            System.Collections.Generic.List<string> lsComputedColumns = new System.Collections.Generic.List<string>();
+
+            return lsComputedColumns;
+        }
+
+
+
+        //public delegate void sqlGenerator_t<T>(System.Text.StringBuilder sb, T thisItem);
+        public delegate void sqlGenerator_t(System.Text.StringBuilder sb, System.Data.DataRow dr);
+
+
+        public virtual int BatchedInsert(System.Data.DataTable dt, sqlGenerator_t sqlGenerator)
+        {
+            int iAffected = 0;
+            int batchSize = 100; // Each batch corresponds to a single round-trip to the DB.
+
+
+            using (System.Data.IDbConnection idbConn = this.GetConnection())
+            {
+
+                lock (idbConn)
+                {
+
+                    using (System.Data.IDbCommand cmd = idbConn.CreateCommand())
+                    {
+
+                        lock (cmd)
+                        {
+                            if (cmd.Connection.State != System.Data.ConnectionState.Open)
+                                cmd.Connection.Open();
+
+                            using (System.Data.IDbTransaction idbtTrans = idbConn.BeginTransaction())
+                            {
+
+                                try
+                                {
+                                    cmd.Transaction = idbtTrans;
+
+
+                                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                                    int i = 0;
+                                    foreach (System.Data.DataRow dr in dt.Rows)
+                                    {
+                                        sqlGenerator(sb, dr);
+                                        if (i % batchSize == 0 && i != 0)
+                                        {
+                                            cmd.CommandText = sb.ToString();
+                                            iAffected += cmd.ExecuteNonQuery();
+                                            sb.Length = 0;
+                                        }
+                                        ++i;
+                                    }
+
+                                    if (sb.Length != 0)
+                                    {
+                                        cmd.CommandText = sb.ToString();
+                                        iAffected += cmd.ExecuteNonQuery();
+                                    }
+
+                                    idbtTrans.Commit();
+                                } // End Try
+                                catch (System.Data.Common.DbException ex)
+                                {
+                                    if (idbtTrans != null)
+                                        idbtTrans.Rollback();
+
+                                    iAffected = -1;
+
+                                    //if (Log(ex))
+                                    throw;
+                                } // End catch
+                                finally
+                                {
+                                    if (cmd.Connection.State != System.Data.ConnectionState.Closed)
+                                        cmd.Connection.Close();
+                                } // End Finally
+
+                            } // End Using idbtTrans
+
+                        } // End lock cmd
+
+                    } // End Using cmd 
+
+                } // End lock idbConn
+
+            } // End Using idbConn
+
+            return iAffected;
+        } // End Function BatchedInsert 
+
+        
+        public virtual string GenerateBulkInserts(System.Data.DataTable dtTable, string targetTableSchema, string sTargetTableName, bool bDebug)
+        {
+            System.Collections.Generic.List<string> lsComputedColumns = GetComputedColumnNames(targetTableSchema, sTargetTableName);
+            string sSqlInserts = string.Empty;
+            System.Text.StringBuilder sbSqlStatements = new System.Text.StringBuilder();
+
+
+            string strSQL = "SELECT * FROM " + this.QuoteObjectWhereNecessary(sTargetTableName) + " WHERE (1=2); ";
+            using (System.Data.DataTable dtColumns = this.GetDataTable(strSQL))
+            {
+                // create the columns portion of the INSERT statement
+                string sColumns = string.Empty;
+
+                foreach (System.Data.DataColumn dc in dtColumns.Columns)
+                {
+                    if (MyExtensionMethods.Contains(lsComputedColumns, dc.ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                        continue;
+
+                    if (sColumns != string.Empty)
+                        sColumns += ", ";
+
+                    sColumns += this.QuoteObjectWhereNecessary(dc.ColumnName);
+                }
+
+                // loop thru each record of the datatable
+                foreach (System.Data.DataRow drow in dtTable.Rows)
+                {
+                    // loop thru each column, and include
+                    // the value if the column is in the array
+                    string sValues = string.Empty;
+
+                    foreach (System.Data.DataColumn dc in dtColumns.Columns)
+                    {
+                        if (MyExtensionMethods.Contains(lsComputedColumns, dc.ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                            continue;
+
+                        if (sValues != string.Empty)
+                            sValues += ", ";
+
+                        // need to do a case to check the column-value types
+                        // (quote strings(check for dups first), convert bools)
+                        string sType = string.Empty;
+                        try
+                        {
+                            if (object.ReferenceEquals(drow[dc.ColumnName], System.DBNull.Value))
+                            {
+                                if (bDebug)
+                                    sValues += "NULL" + " -- " + dc.ColumnName + System.Environment.NewLine;
+                                else
+                                    sValues += "NULL";
+                            }
+                            else
+                            {
+                                if (bDebug)
+                                    sValues += this.Insert_Unicode(drow[dc.ColumnName]) + " -- " + dc.ColumnName + System.Environment.NewLine;
+                                else
+                                    sValues += this.Insert_Unicode(drow[dc.ColumnName]);
+                            }
+
+                        }
+                        catch
+                        {
+                            if (bDebug)
+                                sValues += this.Insert_Unicode(drow[dc.ColumnName]) + " -- " + dc.ColumnName + System.Environment.NewLine;
+                            else
+                                sValues += this.Insert_Unicode(drow[dc.ColumnName]);
+                        }
+                    } // Next dc
+
+                    //   INSERT INTO Tab(COLS) 
+                    //   VALUES('Referrals')
+                    // write the insert line out to the stringbuilder
+                    string snewsql = string.Format("INSERT INTO {0}({1}) ", sTargetTableName, sColumns);
+                    sbSqlStatements.Append(snewsql);
+                    sbSqlStatements.AppendLine();
+                    snewsql = string.Format("VALUES({0});", sValues);
+                    sbSqlStatements.Append(snewsql);
+                    sbSqlStatements.AppendLine();
+                    sbSqlStatements.AppendLine();
+                }
+
+                sSqlInserts = sbSqlStatements.ToString();
+                sbSqlStatements.Length = 0;
+                sbSqlStatements = null;
+            }
+
+            return sSqlInserts;
+        } // GenerateSqlInserts
+
+
+
+        //////////////////////////////////////
+
+
+
+        public virtual bool BulkCopy(string tableSchema, string tableName, System.Data.DataTable dt, bool bWithDelete)
         {
             throw new System.NotImplementedException("BulkCopy not implemented");
         }
 
 
-        public virtual bool BulkCopy(string strDestinationTable, System.Data.DataTable dt, bool bWithDelete)
+        public virtual bool BulkCopy(string tableSchema, string tableName, System.Data.DataTable dt)
         {
-            throw new System.NotImplementedException("BulkCopy not implemented");
+            return BulkCopy(tableSchema, tableName, dt, false);
+        }
+
+
+        public virtual bool BulkCopy(string tableName, System.Data.DataTable dt)
+        {
+            return BulkCopy(this.DefaultSchema, tableName, dt);
+        }
+
+
+        public virtual bool BulkCopy(string tableName, System.Data.DataTable dt, bool bWithDelete)
+        {
+            return BulkCopy(this.DefaultSchema, tableName, dt, bWithDelete);
         }
 
 
@@ -2870,7 +3318,8 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         {
             string strText = GetTextFromObject(obj);
 
-            if (string.IsNullOrEmpty(strText))
+            //if (string.IsNullOrEmpty(strText))
+            if(strText == null)
                 return "NULL";
 
             strText = strText.Replace("'", "''");
@@ -2883,7 +3332,8 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         {
             string strText = GetTextFromObject(obj);
 
-            if (string.IsNullOrEmpty(strText))
+            //if (string.IsNullOrEmpty(strText))
+            if(strText == null)
                 return "NULL";
 
             strText = strText.Replace("'", "''");

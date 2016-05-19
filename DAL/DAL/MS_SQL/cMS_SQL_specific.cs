@@ -207,18 +207,38 @@ namespace DB.Abstraction
         } // End Function ServerVersionInfo
 
 
-        public override bool BulkCopy(string strDestinationTable, System.Data.DataTable dt)
+        public override System.Collections.Generic.List<string> GetComputedColumnNames(string tableSchema, string tableName)
         {
-            return BulkCopy(strDestinationTable, dt, false);
+            System.Collections.Generic.List<string> lsComputedColumns = null;
+
+            using (System.Data.IDbCommand cmd = CreateCommand(@"
+SELECT syscc.name FROM sys.objects AS syso 
+INNER JOIN sys.schemas AS sschema ON sschema.schema_id = syso.schema_id 
+INNER JOIN sys.computed_columns  AS syscc ON syscc.object_id =  syso.object_id 
+WHERE (1=1) 
+AND syso.name = @__destTable 
+AND sschema.name = @__destSchema 
+AND syso.type = 'U '
+AND syscc.is_computed = 1 
+-- AND syscc.is_persisted = 1 
+-- syscc.definition 
+"))
+            {
+                this.AddParameter(cmd, "__destSchema", tableSchema);
+                this.AddParameter(cmd, "__destTable", tableName);
+                lsComputedColumns = this.GetList<string>(cmd);
+            }
+
+            return lsComputedColumns;
         }
 
 
         // BulkCopy("dbo.T_Benutzer", dt)
-        public override bool BulkCopy(string strDestinationTable, System.Data.DataTable dt, bool bWithDelete)
+        public override bool BulkCopy(string tableSchema, string tableName, System.Data.DataTable dt, bool bWithDelete)
         {
             try
             {
-                string sanitizedTableName = this.QuoteObjectWhereNecessary(strDestinationTable);
+                string sanitizedTableName = this.QuoteObjectWhereNecessary(tableName);
 
                 // Ensure table is empty - and throw on foreign-key
                 if (bWithDelete)
@@ -228,22 +248,7 @@ namespace DB.Abstraction
 
 
 
-                System.Collections.Generic.List<string> lsComputedColumns = null;
-
-                using (System.Data.IDbCommand cmd = CreateCommand(@"
-SELECT syscc.name FROM sys.objects AS syso
-INNER JOIN sys.computed_columns  AS syscc ON syscc.object_id =  syso.object_id 
-WHERE (1=1) 
-AND syso.name = @__destTable 
-AND syso.type = 'U '
-AND syscc.is_computed = 1 
--- AND syscc.is_persisted = 1 
--- syscc.definition 
-"))
-                {
-                    this.AddParameter(cmd, "__destTable", strDestinationTable);
-                    lsComputedColumns = this.GetList<string>(cmd);
-                }
+                System.Collections.Generic.List<string> lsComputedColumns = GetComputedColumnNames(tableSchema, tableName);
 
 
                 // http://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlbulkcopyoptions.aspx
@@ -313,7 +318,7 @@ AND syscc.is_computed = 1
             }
             catch (System.Exception ex)
             {
-                if (Log("cMS_SQL_specific.BulkCopy", ex, "BulkCopy: Copy dt to " + strDestinationTable))
+                if (Log("cMS_SQL_specific.BulkCopy", ex, "BulkCopy: Copy dt to " + tableName))
                     throw;
                 //COR.Logging.WriteLogFile("FEHLER", "Ausnahme in COR.SQL.MSSQL.BulkCopy");
                 //COR.Logging.WriteLogFile("FEHLER", ex.Message);
