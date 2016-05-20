@@ -1659,7 +1659,7 @@ ORDER BY ORDINAL_POSITION
 
 
                 using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
-                      "SELECT TOP 100 * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
+                      "SELECT * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
                     , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
                 {
                     int fieldCount = dr.FieldCount;
