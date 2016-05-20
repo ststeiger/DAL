@@ -1642,48 +1642,48 @@ ORDER BY ORDINAL_POSITION
             Newtonsoft.Json.JsonSerializer ser = new Newtonsoft.Json.JsonSerializer();
 
 
-            string str = "SELECT * FROM " + this.QuoteObjectWhereNecessary(tableSchema) + "."
-                + this.QuoteObjectWhereNecessary(tableName) + " WHERE (1=2); ";
-
-            using (System.Data.DataTable dt = this.GetDataTable(str))
+            using (Newtonsoft.Json.JsonTextWriter jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw))
             {
+                // WARNING: ISO will not deserialize properly...
+                // jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+                jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.MicrosoftDateFormat;
 
-                using (Newtonsoft.Json.JsonTextWriter jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw))
+                if (bPrettyPrint)
+                    jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
+                else
+                    jsonWriter.Formatting = Newtonsoft.Json.Formatting.None;
+
+
+
+                jsonWriter.WriteStartObject();
+
+
+                using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
+                      "SELECT TOP 100 * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
+                    , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
                 {
-                    // WARNING: ISO will not deserialize properly...
-                    // jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
-                    jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.MicrosoftDateFormat;
-
-                    if (bPrettyPrint)
-                        jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
-                    else
-                        jsonWriter.Formatting = Newtonsoft.Json.Formatting.None;
-
-
-
-                    jsonWriter.WriteStartObject();
-
-                    jsonWriter.WritePropertyName("TableName");
-                    jsonWriter.WriteValue(dt.TableName);
+                    int fieldCount = dr.FieldCount;
 
                     jsonWriter.WritePropertyName("Columns");
                     jsonWriter.WriteStartArray();
 
-                    foreach (System.Data.DataColumn column in dt.Columns)
+
+                    for (int i = 0; i < fieldCount; ++i)
                     {
                         jsonWriter.WriteStartObject();
 
                         jsonWriter.WritePropertyName("ColumnName");
-                        jsonWriter.WriteValue(column.ColumnName);
+                        jsonWriter.WriteValue(dr.GetName(i));
 
                         jsonWriter.WritePropertyName("DataType");
-                        jsonWriter.WriteValue(GetAssemblyQualifiedNoVersionName(column.DataType.AssemblyQualifiedName));
+                        jsonWriter.WriteValue(GetAssemblyQualifiedNoVersionName(dr.GetFieldType(i).AssemblyQualifiedName));
 
                         // jsonWriter.WritePropertyName("DateTimeMode");
                         // jsonWriter.WriteValue(column.DateTimeMode.ToString());
 
                         jsonWriter.WriteEndObject();
-                    } // Next column 
+                    } // Next i 
+
 
                     jsonWriter.WriteEndArray();
 
@@ -1691,38 +1691,32 @@ ORDER BY ORDINAL_POSITION
                     jsonWriter.WriteStartArray();
 
 
-                    using (System.Data.Common.DbDataReader dr = this.ExecuteDbReader(
-                          "SELECT TOP 100 * FROM " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + ";"
-                        , System.Data.CommandBehavior.SequentialAccess | System.Data.CommandBehavior.CloseConnection))
+                    if (dr.HasRows)
                     {
-                        if (dr.HasRows)
+
+
+                        while (dr.Read())
                         {
-                            int fieldCount = dr.FieldCount;
+                            jsonWriter.WriteStartArray();
 
-                            while (dr.Read())
+                            for (int i = 0; i < fieldCount; ++i)
                             {
-                                jsonWriter.WriteStartArray();
+                                object obj = dr.GetValue(i);
+                                jsonWriter.WriteValue(obj);
+                            } // Next i
 
-                                for (int i = 0; i < fieldCount; ++i)
-                                {
-                                    object obj = dr.GetValue(i);
-                                    jsonWriter.WriteValue(obj);
-                                } // Next i
+                            jsonWriter.WriteEndArray();
+                        } // Whend while (dr.Read())
 
-                                jsonWriter.WriteEndArray();
-                            } // Whend while (dr.Read())
+                    } // End if (dr.HasRows)
 
-                        } // End if (dr.HasRows)
+                } // End using dr 
+                jsonWriter.WriteEndArray();
 
-                    } // End using dr 
-                    jsonWriter.WriteEndArray();
-
-                    jsonWriter.WriteEndObject();
-                    jsonWriter.Flush();
-                    sw.Flush();
-                } // End Using jsonWriter
-
-            } // End Using dt 
+                jsonWriter.WriteEndObject();
+                jsonWriter.Flush();
+                sw.Flush();
+            } // End Using jsonWriter
 
         } // End Sub SerializeTableAsJson
 
@@ -2772,7 +2766,387 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
         /// //////////////////////////////////////////////
 
+        private class JsonFieldInfo
+        {
+            public string ColumnName;
+            public string DataType;
 
+            public System.Type DataTypeTypeInfo
+            {
+                get
+                {
+                    return System.Type.GetType(this.DataType);
+                } // End get 
+            } // End Property DataTypeTypeInfo 
+
+
+
+            public static object JValueToObject(Newtonsoft.Json.Linq.JValue jobj, System.Type t)
+            {
+                if (jobj.Value == null)
+                {
+                    // Warning: This is wrong !
+                    // if (t.IsValueType) return System.Activator.CreateInstance(t);
+                    return null;
+                }
+
+                object obj = (object)jobj.Value;
+
+                System.Type tt = obj.GetType();
+                if (object.ReferenceEquals(t, typeof(System.Guid)) && object.ReferenceEquals(tt, typeof(string)))
+                {
+                    return new System.Guid(obj.ToString());
+                }
+                else if (object.ReferenceEquals(t, typeof(byte[])) && object.ReferenceEquals(tt, typeof(string)))
+                {
+                    byte[] byteArray = System.Convert.FromBase64String(obj.ToString());
+                    return (object)byteArray;
+                }
+                else if (object.ReferenceEquals(t, tt))
+                    return obj;
+
+                return System.Convert.ChangeType(obj, t);
+            } // End Function JValueToObject 
+
+        } // End Class JsonFieldInfo
+
+
+
+        public void InsertJSONFromFile(string tableSchema, string tableName, string fileName)
+        {
+
+            using (System.IO.FileStream fs = new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            {
+                InsertJSON(tableSchema, tableName, fs);
+            } // End Using fs
+
+        } // End Sub InsertJSON 
+
+
+        public void InsertJSON(string tableSchema, string tableName, string json)
+        {
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)))
+            {
+                InsertJSON(tableSchema, tableName, ms);
+            } // End Using ms
+        } // End Sub InsertJSON 
+
+
+
+        public virtual string GetIdentityInsert(string tableSchema, string tableName, bool b)
+        { 
+            if(b)
+                return "SET IDENTITY_INSERT "+this.QuoteObjectWhereNecessary(tableSchema) +"." + this.QuoteObjectWhereNecessary(tableName) + " ON; ";
+
+            return "SET IDENTITY_INSERT " + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + " OFF; ";
+        }
+
+
+
+
+    public  void SwitchConstraints(string tableSchema, string tableName, bool mode )
+    {
+        SwitchConstraint(tableSchema, tableName, null, mode);
+    }
+
+
+    public  void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
+    {
+        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? NOCHECK CONSTRAINT ALL"
+        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? CHECK CONSTRAINT ALL" 
+        if (constraintName == null)
+            constraintName = "ALL";
+        else
+            constraintName = this.QuoteObjectWhereNecessary(constraintName);
+
+        if (mode)
+        {
+            this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema) 
+                +"." 
+                + this.QuoteObjectWhereNecessary(tableName) 
+                + " CHECK CONSTRAINT " 
+                + constraintName
+            );
+            return;
+        }
+
+        this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
+                + "."
+                + this.QuoteObjectWhereNecessary(tableName)
+                + " NOCHECK CONSTRAINT "
+                + constraintName
+        );
+    }
+
+
+    public  void SwitchTriggers(string tableSchema, string tableName, bool mode)
+    {
+        SwitchTrigger(tableSchema, tableName, null, mode);
+    }
+
+    public void SwitchTrigger(string tableSchema, string tableName, string triggerName, bool mode)
+    {
+        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? DISABLE TRIGGER ALL"
+        //EXEC sp_MSforeachtable @command1="ALTER TABLE ? ENABLE TRIGGER ALL"
+        if (triggerName == null)
+            triggerName = "ALL";
+        else
+            triggerName = this.QuoteObjectWhereNecessary(triggerName);
+
+        if (mode)
+        {
+            this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
+                + "."
+                + this.QuoteObjectWhereNecessary(tableName)
+                + " ENABLE TRIGGER "
+                + triggerName
+            );
+            return;
+        }
+
+        this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
+                + "."
+                + this.QuoteObjectWhereNecessary(tableName)
+                + " DISABLE TRIGGER "
+                + triggerName
+        );
+
+    }
+
+
+
+
+
+        // https://stackoverflow.com/questions/13772019/sql-check-if-a-column-auto-increments
+        public virtual bool IsAutoIncrementTable(string tableSchema, string tableName)
+        {
+            string SQL = @"SELECT ISNULL(MAX(CAST(is_identity AS int)), 0) FROM sys.columns 
+WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + @"')
+";
+            return this.ExecuteScalar<bool>(SQL);      
+        }
+
+
+        public void InsertJSON(string tableSchema, string tableName, System.IO.Stream fs)
+        {
+            int iAffected = 0;
+            // string tableSchema = "dbo";
+            // string tableName = "T_Benutzer";
+
+
+            string strInsert = @"INSERT INTO " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + "( \r\n";
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            
+            int openArrayCounter = 0;
+            JsonFieldInfo[] columnInfo = null;
+            
+            int currentBatchSize = 0;
+            const int BATCH_SIZE = 250;
+
+
+            Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
+
+            bool IsAutoIncrement = IsAutoIncrementTable(tableSchema, tableName);
+            this.SwitchConstraints(tableSchema, tableName, false);
+            this.SwitchTriggers(tableSchema, tableName, false);
+
+            using (System.Data.IDbConnection idbConn = this.GetConnection())
+            {
+
+                lock (idbConn)
+                {
+
+                    using (System.Data.IDbCommand cmd = idbConn.CreateCommand())
+                    {
+
+                        lock (cmd)
+                        {
+                            if (cmd.Connection.State != System.Data.ConnectionState.Open)
+                                cmd.Connection.Open();
+
+                            using (System.Data.IDbTransaction idbtTrans = idbConn.BeginTransaction())
+                            {
+
+                                try
+                                {
+                                    cmd.Transaction = idbtTrans;
+
+
+                                    // -----------------------------------------------------------
+
+                                    using (System.IO.StreamReader sr = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8))
+                                    {
+
+                                        using (Newtonsoft.Json.JsonTextReader reader = new Newtonsoft.Json.JsonTextReader(sr))
+                                        {
+                                            while (reader.Read())
+                                            {
+
+                                                if (reader.TokenType == Newtonsoft.Json.JsonToken.StartArray)
+                                                {
+                                                    if (openArrayCounter > 0)
+                                                    {
+                                                        Newtonsoft.Json.Linq.JArray jRow = Newtonsoft.Json.Linq.JArray.Load(reader);
+
+                                                        // object[] obj = new object[jRow.Count];
+                                                        sb.Append(strInsert);
+
+                                                        // Scope: KEEP_i_LOCAL 
+                                                        {
+                                                            int i = 0;
+                                                            foreach (Newtonsoft.Json.Linq.JToken thisArrayMember in jRow.Children())
+                                                            {
+                                                                Newtonsoft.Json.Linq.JValue jv = Newtonsoft.Json.Linq.Extensions
+                                                                    .Value<Newtonsoft.Json.Linq.JValue>(thisArrayMember);
+
+                                                                try
+                                                                {
+                                                                    // object objt = JValueToObject(jv, typeof(string));
+                                                                    // System.Console.WriteLine(objt);
+                                                                    // obj[i] = JValueToObject(jv, columnInfo[i].DataTypeTypeInfo);
+                                                                    object obj = JsonFieldInfo.JValueToObject(jv, columnInfo[i].DataTypeTypeInfo);
+
+                                                                    sb.Append(i == 0 ? " " : ",");
+                                                                    sb.Append(GetInsertText(obj));
+
+                                                                    sb.Append(" -- ");
+                                                                    sb.Append(columnInfo[i].ColumnName);
+                                                                    sb.Append("\r\n");
+                                                                } // End Try 
+                                                                catch (System.Exception ex)
+                                                                {
+                                                                    // System.Console.WriteLine(table.Columns[i].ColumnName);
+                                                                    System.Console.WriteLine(ex.Message);
+                                                                    throw;
+                                                                } // End Catch 
+
+                                                                ++i;
+                                                            } // Next thisArrayMember 
+
+                                                        } // End Scope: KEEP_i_LOCAL
+                                                        
+                                                        sb.Append(");\r\n"); // End Insert Row
+                                                        ++currentBatchSize;
+
+
+                                                        if (currentBatchSize % BATCH_SIZE == 0 && currentBatchSize != 0)
+                                                        {
+                                                            if (IsAutoIncrement)
+                                                            {
+                                                                sb.Insert(0, GetIdentityInsert(tableSchema, tableName, true) + "\r\n");
+                                                                sb.Append(GetIdentityInsert(tableSchema, tableName, false));
+                                                                sb.Append("\r\n");
+                                                            } // End if (IsAutoIncrement) 
+
+                                                            cmd.CommandText = sb.ToString();
+                                                            iAffected += cmd.ExecuteNonQuery();
+                                                            sb.Length = 0;
+                                                            currentBatchSize = 0;
+                                                        } // End if (currentBatchSize % BATCH_SIZE == 0 && currentBatchSize != 0)
+
+                                                    } // End if (openArrayCounter > 0) 
+
+                                                    ++openArrayCounter;
+                                                } // End if (reader.TokenType == Newtonsoft.Json.JsonToken.StartArray) 
+                                                else if (reader.TokenType == Newtonsoft.Json.JsonToken.EndArray)
+                                                {
+                                                    openArrayCounter--;
+                                                }
+                                                else if (reader.TokenType == Newtonsoft.Json.JsonToken.PropertyName)
+                                                {
+                                                    if (string.Equals(reader.Value, "Columns"))
+                                                    {
+                                                        // public class TableInfo { public System.Collections.Generic.List<JsonFieldInfo> Columns; }
+                                                        // Doesn't work
+                                                        // TableInfo thisRow = serializer.Deserialize<TableInfo>(reader);
+                                                        reader.Read(); // So instead advance to property.Value
+                                                        columnInfo = serializer.Deserialize<JsonFieldInfo[]>(reader);
+
+
+                                                        //// Otherwise, without any serialization
+                                                        //Newtonsoft.Json.Linq.JProperty obj = Newtonsoft.Json.Linq.JProperty.Load(reader);
+                                                        //Newtonsoft.Json.Linq.JArray columnsArray = (Newtonsoft.Json.Linq.JArray)obj.Value;
+
+                                                        //columnInfo = new JsonFieldInfo[columnsArray.Count];
+                                                        //int i = 0;
+                                                        //foreach (Newtonsoft.Json.Linq.JToken thisColumn in columnsArray)
+                                                        //{
+                                                        //    columnInfo[i] = new JsonFieldInfo()
+                                                        //    {
+                                                        //        ColumnName = Newtonsoft.Json.Linq.Extensions.Value<string>(thisColumn.SelectToken("ColumnName")),
+                                                        //        DataType = Newtonsoft.Json.Linq.Extensions.Value<string>(thisColumn.SelectToken("DataType"))
+                                                        //    };
+
+                                                        //    ++i;
+                                                        //} // Next thisColumn 
+
+
+                                                        //System.Console.WriteLine(columnInfo); 
+                                                        for (int i = 0; i < columnInfo.Length; ++i)
+                                                        {
+                                                            strInsert += (i == 0 ? " " : ",") + this.QuoteObjectWhereNecessary(columnInfo[i].ColumnName) + "\r\n";
+                                                        } // Next i 
+                                                        strInsert += ") VALUES ( \r\n";
+
+                                                    } // End if(string.Equals(reader.Value, "Columns")) 
+
+                                                } // End if (reader.TokenType == Newtonsoft.Json.JsonToken.PropertyName) 
+
+                                            } // Whend 
+
+                                            reader.Close();
+                                        } // End Using reader 
+
+                                    } // End using sr 
+
+
+                                    if (sb.Length != 0)
+                                    {
+                                        if (IsAutoIncrement)
+                                        {
+                                            sb.Insert(0, GetIdentityInsert(tableSchema, tableName, true) + "\r\n");
+                                            sb.Append(GetIdentityInsert(tableSchema, tableName, false));
+                                            sb.Append("\r\n");
+                                        } // End if (IsAutoIncrement) 
+
+                                        cmd.CommandText = sb.ToString();
+                                        iAffected += cmd.ExecuteNonQuery();
+                                    } // End if (sb.Length != 0)
+
+                                    idbtTrans.Commit();
+                                } // End Try
+                                catch (System.Data.Common.DbException ex)
+                                {
+                                    if (idbtTrans != null)
+                                        idbtTrans.Rollback();
+
+                                    iAffected = -1;
+
+                                    this.SwitchConstraints(tableSchema, tableName, true);
+                                    this.SwitchTriggers(tableSchema, tableName, true);
+
+                                    if(Log(ex, cmd))
+                                        throw;
+                                } // End catch
+                                finally
+                                {
+                                    if (cmd.Connection.State != System.Data.ConnectionState.Closed)
+                                        cmd.Connection.Close();
+                                } // End Finally
+
+                            } // End Using idbtTrans
+
+                        } // End lock cmd
+
+                    } // End Using cmd 
+
+                } // End lock idbConn
+
+            } // End Using idbConn
+
+            this.SwitchConstraints(tableSchema, tableName, true);
+            this.SwitchTriggers(tableSchema, tableName, true);
+        } // End Sub InsertJSON 
 
 
         public virtual void DebugBulkCopy(string tableName, System.Data.DataTable dt, bool bWithDelete)
@@ -2822,7 +3196,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 bool bDebug = true;
 
 
-                BatchedInsert(dt, delegate(System.Text.StringBuilder sb, System.Data.DataRow dr)
+                this.BatchedInsert(dt, delegate(System.Text.StringBuilder sb, System.Data.DataRow dr)
                 {
                     sb.Append(form);
 
@@ -2860,43 +3234,11 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                     } // Next dc
 
                     sb.AppendLine(");");
-                });
+                }); // End BatchedInsert
 
-            }
+            } // End Using dtColumns 
 
         } // DebugBulkCopy
-
-
-        public string GetInsertText(object obj, System.Type t)
-        {
-            if (obj == null || obj == System.DBNull.Value)
-                return "NULL";
-
-            if (object.ReferenceEquals(t, typeof(System.DateTime)))
-                return this.Insert_DateTime(obj);
-
-            if (object.ReferenceEquals(t, typeof(byte[])))
-                return "0x" + ByteToHexBitFiddle((byte[])obj);
-
-            return this.Insert_Unicode(obj);
-        }
-
-
-        private static string ByteToHexBitFiddle(byte[] bytes)
-        {
-            char[] c = new char[bytes.Length * 2];
-            int b;
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                b = bytes[i] >> 4;
-                c[i * 2] = (char)(55 + b + (((b - 10) >> 31) & -7));
-                b = bytes[i] & 0xF;
-                c[i * 2 + 1] = (char)(55 + b + (((b - 10) >> 31) & -7));
-            }
-
-            return new string(c);
-        }
-
 
 
         public virtual System.Collections.Generic.List<string> GetComputedColumnNames(string tableSchema, string tableName)
@@ -3314,47 +3656,42 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         } // End Function Insert_DateTime
 
 
-        public string Insert_ASCII(object obj)
+        private static string ByteToHexBitFiddle(byte[] bytes)
         {
-            string strText = GetTextFromObject(obj);
-
-            //if (string.IsNullOrEmpty(strText))
-            if(strText == null)
-                return "NULL";
-
-            strText = strText.Replace("'", "''");
-
-            return "'" + strText + "'";
-        } // End Function Insert_ASCII
-
-
-        public virtual string Insert_Unicode(object obj)
-        {
-            string strText = GetTextFromObject(obj);
-
-            //if (string.IsNullOrEmpty(strText))
-            if(strText == null)
-                return "NULL";
-
-            strText = strText.Replace("'", "''");
-
-            return "'" + strText + "'";
-        } // End Function Insert_Unicode
+            char[] c = new char[bytes.Length * 2];
+            int b;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                b = bytes[i] >> 4;
+                c[i * 2] = (char)(55 + b + (((b - 10) >> 31) & -7));
+                b = bytes[i] & 0xF;
+                c[i * 2 + 1] = (char)(55 + b + (((b - 10) >> 31) & -7));
+            }
+            return new string(c);
+        } // End Function ByteToHexBitFiddle 
 
 
         protected virtual string GetTextFromObject(object obj)
+        {
+            if (obj == null)
+                return null;
+
+            return GetTextFromObject(obj, obj.GetType());
+        }
+
+        protected virtual string GetTextFromObject(object obj, System.Type t)
         {
             string strText = null;
 
             if (obj != null)
             {
-                if (object.ReferenceEquals(obj.GetType(), typeof(System.DateTime)))
+                if (object.ReferenceEquals(t, typeof(System.DateTime)))
                 {
                     System.DateTime dtDateTime = (System.DateTime)obj;
                     //strText = dtDateTime.ToString("yyyy-MM-dd");
                     strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss"); // ISO 8601
                 }
-                else if (object.ReferenceEquals(obj.GetType(), typeof(bool)))
+                else if (object.ReferenceEquals(t, typeof(bool)))
                 {
                     bool bValue = (bool)obj;
                     if (bValue)
@@ -3362,7 +3699,11 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                     else
                         strText = "false";
                 }
-                else if (object.ReferenceEquals(obj.GetType().BaseType, typeof(System.Text.Encoding)))
+                if (object.ReferenceEquals(t, typeof(byte[])))
+                {
+                    return "0x" + ByteToHexBitFiddle((byte[])obj);
+                }
+                else if (object.ReferenceEquals(t.BaseType, typeof(System.Text.Encoding)))
                 {
                     System.Text.Encoding enc = (System.Text.Encoding)obj;
                     //strText = enc.EncodingName;
@@ -3378,6 +3719,96 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
             return strText;
         } // End Function GetTextFromObject
+
+
+        public string Insert_ASCII(object obj)
+        {
+            string strText = GetTextFromObject(obj);
+
+            //if (string.IsNullOrEmpty(strText))
+            if (strText == null)
+                return "NULL";
+
+            strText = strText.Replace("'", "''");
+
+            return "'" + strText + "'";
+        } // End Function Insert_ASCII
+
+
+        public virtual string Insert_Unicode(object obj)
+        {
+            string strText = GetTextFromObject(obj);
+
+            //if (string.IsNullOrEmpty(strText))
+            if (strText == null)
+                return "NULL";
+
+            strText = strText.Replace("'", "''");
+
+            return "N'" + strText + "'";
+        } // End Function Insert_Unicode
+
+
+        protected virtual string GetInsertText(object obj)
+        {
+            if (obj == null)
+                return "NULL";
+
+            return GetInsertText(obj, obj.GetType());
+        } // End Function GetInsertText 
+
+
+        protected virtual string GetInsertText(object obj, System.Type t)
+        {
+            string strText = null;
+
+            if (obj == null)
+                return "NULL";
+
+            if (object.ReferenceEquals(t, typeof(System.DateTime)))
+            {
+                System.DateTime dtDateTime = (System.DateTime)obj;
+                //strText = dtDateTime.ToString("yyyy-MM-dd");
+                strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss"); // ISO 8601
+                return "'" + strText.Replace("'", "''") + "'"; // Don't trust .NET - Paranoia
+            }
+
+            if (object.ReferenceEquals(t, typeof(System.Guid)))
+            {
+                return "'" + obj.ToString() + "'";
+            }
+
+            if (object.ReferenceEquals(t, typeof(bool)))
+            {
+                bool bValue = (bool)obj;
+                if (bValue)
+                    strText = "true";
+                else
+                    strText = "false";
+
+                return "'" + strText + "'";
+            }
+            
+            if (object.ReferenceEquals(t, typeof(byte[])))
+            {
+                return "0x" + ByteToHexBitFiddle((byte[])obj);
+            }
+            
+            if (object.ReferenceEquals(t.BaseType, typeof(System.Text.Encoding)))
+            {
+                System.Text.Encoding enc = (System.Text.Encoding)obj;
+                //strText = enc.EncodingName;
+                //strText = enc.BodyName;
+                //strText = enc.HeaderName;
+                //strText = enc.CodePage.ToString(); // 20127
+                //strText = enc.WindowsCodePage.ToString() ; // 1252
+                strText = enc.WebName;
+                strText = "'" + strText.Replace("'", "''") + "'";
+                return strText;
+            }
+
+            return "'" + obj.ToString().Replace("'", "''") + "'";
+        } // End Function GetInsertText 
 
 
         // From Type to DBType
