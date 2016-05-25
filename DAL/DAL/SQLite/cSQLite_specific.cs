@@ -459,10 +459,10 @@ WHERE fhasdfsdajflsadfjasdflk_RowId_jfsalkdfjlasdfkasdfjlk BETWEEN @ulngStartInd
         public override System.Exception ShrinkDb(string DbName, int Percent)
         {
             string strSQL = null;
-            throw new System.NotImplementedException("ShrinkDb");
+            
             try
             {
-                System.Console.WriteLine("Shrink DB");
+                System.Console.WriteLine("Shrink DB not implemented");
             }
             catch (System.Exception ex)
             {
@@ -470,15 +470,14 @@ WHERE fhasdfsdajflsadfjasdflk_RowId_jfsalkdfjlasdfkasdfjlk BETWEEN @ulngStartInd
                 return ex;
             }
 
-            return null;
+            // return null;
+            throw new System.NotImplementedException("ShrinkDb");
         }
 
 
         public override System.Exception BackupDbOnServer(string DbName, string BackupToFilename)
         {
             string strSQL = null;
-
-            throw new System.NotImplementedException("BackupDbOnServer");
 
             try
             {
@@ -512,7 +511,9 @@ TO DISK = '{1}'
                 return ex;
             }
 
-            return null;
+            // return null;
+
+            throw new System.NotImplementedException("BackupDbOnServer");
         } // End Function BackupDbOnServer
 
 

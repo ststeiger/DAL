@@ -172,7 +172,9 @@ SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
             csb.Database = "startups";
             csb.Host = "127.0.0.1";
 
-            return csb.ToString();
+            str = csb.ToString();
+
+            return str;
         } // End Function GetConnectionString
 
 

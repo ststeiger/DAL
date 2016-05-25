@@ -76,15 +76,16 @@ select * from all_users;
 
 
         // http://web.firebirdsql.org/dotnetfirebird/create-a-new-database-from-an-sql-script.html
-        public override void CreateDB(string strDBname, string strDataLocation, string strLogLocation)
+        public override void CreateDB(string dbName, string strDataLocation, string strLogLocation)
         {
-            throw new System.NotImplementedException("cOracleSchema.CreateDb");
+            // Not Implemented 
 
             try
             {
                 try
                 {
-                    System.Console.WriteLine("Create DB");
+                    System.Console.WriteLine("Create Db " + dbName);
+                    System.Console.WriteLine("Not implemented...");
                     // Create a new database
                     //System.Data.OracleClient.OracleConnection.CreateDatabase(this.m_ConnectionString.ConnectionString);
                 }
@@ -98,13 +99,15 @@ select * from all_users;
             } // End Try
             catch (System.Exception ex)
             {
-                if (Log("cOracleSchema.CreateDB(string strDBname, string strDataLocation, string strLogLocation)", ex, "CreateDB"))
+                if (Log("cOracleSchema.CreateDB(string dbName, string strDataLocation, string strLogLocation)", ex, "CreateDB"))
                     throw;
             } // End Catch
             finally
             {
                 System.Threading.Thread.Sleep(2000); // Wait for disk-write complete
             } // End Finally
+
+            throw new System.NotImplementedException("cOracleSchema.CreateDb");
         } // End Sub CreateDB
 
 

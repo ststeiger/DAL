@@ -203,16 +203,17 @@ ORDER BY datname ASC ;
 
 
         // http://web.firebirdsql.org/dotnetfirebird/create-a-new-database-from-an-sql-script.html
-        public override void CreateDB(string strDBname, string strDataLocation, string strLogLocation)
+        public override void CreateDB(string dbName, string strDataLocation, string strLogLocation)
         {
-            throw new System.NotImplementedException("cPostGreSQL_schema.cs ==> CreateDB");
+            // Not implemented 
 
             try
             {
 
                 try
                 {
-                    System.Console.WriteLine("Create DB");
+                    System.Console.WriteLine("Create Db " + dbName);
+                    System.Console.WriteLine("Not implemented...");
                     // Create a new database
                     //Npgsql.NpgsqlConnection.CreateDatabase(this.m_ConnectionString.ConnectionString);
                 }
@@ -233,6 +234,8 @@ ORDER BY datname ASC ;
             {
                 System.Threading.Thread.Sleep(2000); // Wait for disk-write complete
             } // End Finally
+
+            throw new System.NotImplementedException("cPostGreSQL_schema.cs ==> CreateDB");
         }
 
 

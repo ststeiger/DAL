@@ -505,7 +505,7 @@ namespace DB.Abstraction
             return hs;
         }
 
-        protected static HashSet<string> GetCurrentKeywords()
+        protected override HashSet<string> GetCurrentKeywords()
         {
             HashSet<string> hs = new HashSet<string>(System.StringComparer.InvariantCultureIgnoreCase);
             hs.Add("ADD");
@@ -697,7 +697,7 @@ namespace DB.Abstraction
             return hs;
         }
 
-        public static HashSet<string> GetOdbcKeywords()
+        protected override HashSet<string> GetOdbcKeywords()
         {
             HashSet<string> hs = new HashSet<string>(System.StringComparer.InvariantCultureIgnoreCase);
             hs.Add("ABSOLUTE");
@@ -940,7 +940,7 @@ namespace DB.Abstraction
         }
 
 
-        protected static HashSet<string> GetFutureKeywords()
+        protected override HashSet<string> GetFutureKeywords()
         {
             HashSet<string> hs = new HashSet<string>(System.StringComparer.InvariantCultureIgnoreCase);
             hs.Add("ABSOLUTE");

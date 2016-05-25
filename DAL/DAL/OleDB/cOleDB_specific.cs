@@ -72,7 +72,7 @@ namespace DB.Abstraction
 
 
             //Console.WriteLine(m_ConnectionString.ConnectionString);
-            return m_ConnectionString.ConnectionString; ;
+            // return m_ConnectionString.ConnectionString; ;
         } // End Function GetConnectionString
 
 

@@ -303,14 +303,16 @@ ORDER BY Sort, Name
 		
 		
 		// http://web.firebirdsql.org/dotnetfirebird/create-a-new-database-from-an-sql-script.html
-		public override void CreateDB(string strDBname, string strDataLocation, string strLogLocation)
+        public override void CreateDB(string dbName, string strDataLocation, string strLogLocation)
 		{
-            throw new System.NotImplementedException("cMySQL_schema.cs ==> CreateDB");
+            // Not implemented 
+   
 			try
 			{
 				try
 				{
-                    System.Console.WriteLine("Create Db");
+                    System.Console.WriteLine("Create Db " + dbName);
+                    System.Console.WriteLine("Not implemented...");
 					// Create a new database
 					//MySql.Data.MySqlClient.MySqlConnection.CreateDatabase(this.m_ConnectionString.ConnectionString);
 				}
@@ -324,13 +326,15 @@ ORDER BY Sort, Name
 			} // End Try
             catch (System.Exception ex)
 			{
-                if (Log("cMySQL_schema.cs ==> CreateDB(string strDBname, string strDataLocation, string strLogLocation)", ex, "CreateDB"))
+                if (Log("cMySQL_schema.cs ==> CreateDB(string dbName, string strDataLocation, string strLogLocation)", ex, "CreateDB"))
                     throw;
 			} // End Catch
 			finally
 			{
 				System.Threading.Thread.Sleep(2000); // Wait for disk-write complete
 			} // End Finally
+
+            throw new System.NotImplementedException("cMySQL_schema.cs ==> CreateDB");
 		}
 		
 		

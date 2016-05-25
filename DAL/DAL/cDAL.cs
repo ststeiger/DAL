@@ -1611,13 +1611,16 @@ ORDER BY ORDINAL_POSITION
         } // End Sub SerializeTableAsJson
 
 
+        private static string GetAssemblyQualifiedNoVersionName(System.Type type)
+        {
+            if (type == null)
+                return null;
+
+            return GetAssemblyQualifiedNoVersionName(type.AssemblyQualifiedName);
+        }
 
 
-
-
-
-
-        public static string GetAssemblyQualifiedNoVersionName(string input)
+        private static string GetAssemblyQualifiedNoVersionName(string input)
         {
             int i = 0;
             bool isNotFirst = false;
@@ -1676,7 +1679,7 @@ ORDER BY ORDINAL_POSITION
                         jsonWriter.WriteValue(dr.GetName(i));
 
                         jsonWriter.WritePropertyName("DataType");
-                        jsonWriter.WriteValue(GetAssemblyQualifiedNoVersionName(dr.GetFieldType(i).AssemblyQualifiedName));
+                        jsonWriter.WriteValue(GetAssemblyQualifiedNoVersionName(dr.GetFieldType(i)));
 
                         // jsonWriter.WritePropertyName("DateTimeMode");
                         // jsonWriter.WriteValue(column.DateTimeMode.ToString());
@@ -2771,6 +2774,13 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             public string ColumnName;
             public string DataType;
 
+            public JsonFieldInfo()
+            {
+                this.ColumnName = null;
+                this.DataType = null;
+            }
+
+
             public System.Type DataTypeTypeInfo
             {
                 get
@@ -3158,9 +3168,6 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
         // DAL.DebugBulkCopy("dbo.T_Benutzer", dt, true)
         public virtual void DebugBulkCopy(string tableSchema, string strDestinationTable, System.Data.DataTable dt, bool bWithDelete)
         {
-            string strLogFilePath = null;
-            //"d:\temp\loginsert.sql"
-
             string strSQL = "";
             if (bWithDelete)
             {
@@ -3229,7 +3236,8 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
                         catch(System.Exception ex)
                         {
                             System.Console.WriteLine(ex.Message);
-                            throw;
+                            if(Log(ex, sb.ToString()))
+                                throw;
                         }
                     } // Next dc
 
@@ -3311,8 +3319,8 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
 
                                     iAffected = -1;
 
-                                    //if (Log(ex))
-                                    throw;
+                                    if (Log(ex, cmd))
+                                        throw;
                                 } // End catch
                                 finally
                                 {
