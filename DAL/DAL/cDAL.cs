@@ -2944,6 +2944,9 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
             // string tableName = "T_Benutzer";
 
 
+
+            System.Collections.Generic.List<string> lsComputedColumns = GetComputedColumnNames(tableSchema, tableName);
+
             string strInsert = @"INSERT INTO " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + "( \r\n";
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             
@@ -3004,8 +3007,15 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
                                                         // Scope: KEEP_i_LOCAL 
                                                         {
                                                             int i = 0;
+                                                            bool bIsFirst = true;
                                                             foreach (Newtonsoft.Json.Linq.JToken thisArrayMember in jRow.Children())
                                                             {
+                                                                if (MyExtensionMethods.Contains(lsComputedColumns, columnInfo[i].ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                                                                {
+                                                                    ++i;
+                                                                    continue;
+                                                                }
+
                                                                 Newtonsoft.Json.Linq.JValue jv = Newtonsoft.Json.Linq.Extensions
                                                                     .Value<Newtonsoft.Json.Linq.JValue>(thisArrayMember);
 
@@ -3016,12 +3026,14 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
                                                                     // obj[i] = JValueToObject(jv, columnInfo[i].DataTypeTypeInfo);
                                                                     object obj = JsonFieldInfo.JValueToObject(jv, columnInfo[i].DataTypeTypeInfo);
 
-                                                                    sb.Append(i == 0 ? " " : ",");
+                                                                    sb.Append(bIsFirst ? " " : ",");
                                                                     sb.Append(GetInsertText(obj));
 
                                                                     sb.Append(" -- ");
                                                                     sb.Append(columnInfo[i].ColumnName);
                                                                     sb.Append("\r\n");
+
+                                                                    bIsFirst = false;
                                                                 } // End Try 
                                                                 catch (System.Exception ex)
                                                                 {
@@ -3094,6 +3106,9 @@ WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "
                                                         //System.Console.WriteLine(columnInfo); 
                                                         for (int i = 0; i < columnInfo.Length; ++i)
                                                         {
+                                                            if (MyExtensionMethods.Contains(lsComputedColumns, columnInfo[i].ColumnName, System.StringComparer.InvariantCultureIgnoreCase))
+                                                                continue;
+
                                                             strInsert += (i == 0 ? " " : ",") + this.QuoteObjectWhereNecessary(columnInfo[i].ColumnName) + "\r\n";
                                                         } // Next i 
                                                         strInsert += ") VALUES ( \r\n";
