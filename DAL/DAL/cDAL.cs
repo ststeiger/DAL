@@ -2605,23 +2605,39 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
         public static object MyChangeType(object objVal, System.Type t)
         {
+            bool typeIsNullable = IsNullable(t);
+            bool typeCanBeAssignedNull = !t.IsValueType || typeIsNullable;
+
             if (objVal == null || object.ReferenceEquals(objVal, System.DBNull.Value))
             {
-                return null;
+                if (typeCanBeAssignedNull)
+                    return null;
+                else
+                    throw new System.ArgumentNullException("objVal ([DataSource] => SetProperty => MyChangeType => you're trying to NULL a type that NULL cannot be assigned to...)");
             }
 
             //getbasetype
             System.Type tThisType = objVal.GetType();
 
-            bool bNullable = IsNullable(t);
-            if (bNullable)
+            if (typeIsNullable)
             {
                 t = System.Nullable.GetUnderlyingType(t);
             }
 
+
+            if (object.ReferenceEquals(tThisType, t))
+                return objVal;
+
+            // Convert Guid => string 
             if (object.ReferenceEquals(t, typeof(string)) && object.ReferenceEquals(tThisType, typeof(System.Guid)))
             {
                 return objVal.ToString();
+            }
+
+            // Convert string => Guid 
+            if (object.ReferenceEquals(t, typeof(System.Guid)) && object.ReferenceEquals(tThisType, typeof(string)))
+            {
+                return new System.Guid(objVal.ToString());
             }
 
             return System.Convert.ChangeType(objVal, t);
