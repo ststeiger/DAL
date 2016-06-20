@@ -7,7 +7,45 @@ namespace DB.Abstraction
     {
 
         ////////////////////////////// Schema //////////////////////////////
-        
+
+        // https://stackoverflow.com/questions/13772019/sql-check-if-a-column-auto-increments
+        public override bool IsAutoIncrementTable(string tableSchema, string tableName)
+        {
+            string SQL = @"SELECT ISNULL(MAX(CAST(is_identity AS int)), 0) FROM sys.columns 
+WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + @"')
+";
+            return this.ExecuteScalar<bool>(SQL);      
+        }
+
+
+        public override void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
+        {
+            // EXEC sp_MSforeachtable @command1="ALTER TABLE ? NOCHECK CONSTRAINT ALL"
+            // EXEC sp_MSforeachtable @command1="ALTER TABLE ? CHECK CONSTRAINT ALL" 
+            if (constraintName == null)
+                constraintName = "ALL";
+            else
+                constraintName = this.QuoteObjectWhereNecessary(constraintName);
+
+            if (mode)
+            {
+                this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema) 
+                    +"." 
+                    + this.QuoteObjectWhereNecessary(tableName) 
+                    + " CHECK CONSTRAINT " 
+                    + constraintName
+                );
+                return;
+            }
+
+            this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
+                + "." 
+                + this.QuoteObjectWhereNecessary(tableName)
+                + " NOCHECK CONSTRAINT "
+                + constraintName
+            );
+        } // End Sub SwitchConstraint
+
 
         // http://stackoverflow.com/questions/16343285/postgresql-how-to-list-all-available-datatypes
 		public override System.Data.DataTable GetTypes()

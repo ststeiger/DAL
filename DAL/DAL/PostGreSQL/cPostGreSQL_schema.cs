@@ -9,7 +9,184 @@ namespace DB.Abstraction
     // http://dev.mysql.com/doc/refman/5.0/en/connector-odbc-configuration-dsn-windows.html
     partial class cPostGreSQL : cDAL
     {
+
+
+        public override string DatabaseCreateScript(string DbName, string NewDbName)
+        {
+            return " -- Not Implemented";
+        }
+
+
+        public override System.Data.DataTable GetForeignKeyDependencies()
+        {
+            System.Data.DataTable dt = new System.Data.DataTable();
+            // "cDAL.GetForeignKeyDependencies not implemented"
+
+            string strSQL = @"
+DROP TABLE IF EXISTS CTE_AllTables; 
+-- CREATE TEMPORARY TABLE IF NOT EXISTS CTE_AllTables 
+
+CREATE TEMPORARY TABLE CTE_AllTables AS 
+SELECT 
+     ist.table_schema AS OnTableSchema 
+    ,ist.table_name AS OnTableName  
+    ,tForeignKeyInformation.FkNullable 
+    -- WARNING: TableSchema or Tablename can contain entry-separator (';' used) 
+    ,CAST(DENSE_RANK() OVER (ORDER BY ist.table_schema, ist.table_name) AS varchar(20)) AS OnTableId 
+    ,tForeignKeyInformation.AgainstTableSchema AS AgainstTableSchema 
+    ,tForeignKeyInformation.AgainstTableName AS AgainstTableName 
+FROM INFORMATION_SCHEMA.TABLES AS ist 
+
+LEFT JOIN 
+( 
+    SELECT 
+         KCU1.table_schema AS OnTableSchema 
+        ,KCU1.table_name AS OnTableName 
+    -- ,isc.COLUMN_NAME -- WARNING: Multi-column foreign-keys 
+    ,MIN(isc.IS_NULLABLE) AS FkNullable -- if (x·'YES' + 1⁺·'NO') ==> pick NO, else pick YES 
+        ,KCU2.table_schema AS AgainstTableSchema 
+    ,KCU2.table_name AS AgainstTableName 
+    FROM information_schema.referential_constraints AS RC 
+    
+    INNER JOIN information_schema.key_column_usage AS KCU1 
+        ON KCU1.constraint_catalog = RC.constraint_catalog 
+        AND KCU1.constraint_schema = RC.constraint_schema 
+        AND KCU1.constraint_name = RC.constraint_name 
         
+    INNER JOIN information_schema.key_column_usage AS KCU2 
+        ON KCU2.constraint_catalog =  RC.constraint_catalog 
+        AND KCU2.constraint_schema = RC.unique_constraint_schema 
+        AND KCU2.constraint_name = RC.unique_constraint_name 
+        AND KCU2.ordinal_position = KCU1.ordinal_position 
+        
+    INNER JOIN INFORMATION_SCHEMA.COLUMNS AS isc 
+        ON isc.table_name = KCU1.table_name 
+        AND isc.table_schema = KCU1.table_schema 
+        AND isc.table_catalog = KCU1.table_catalog 
+        AND isc.column_name = KCU1.column_name 
+        
+        
+    -- WARNING: table can have recursive dependency on itselfs... 
+    -- if it is ommitted, table doesn't appear because of NOCYCLE-check 
+    WHERE KCU1.table_name <> KCU2.table_name 
+
+    GROUP BY 
+         KCU1.table_schema -- OnTableSchema 
+        ,KCU1.table_name -- OnTableName 
+        ,KCU2.table_schema -- AgainstTableSchema 
+        ,KCU2.table_name -- AgainstTableName 
+
+    -- Uncomment below when you only want to check FKs that aren't nullable 
+    -- HAVING MIN(isc.IS_NULLABLE) = 'NO' 
+) AS tForeignKeyInformation 
+    ON tForeignKeyInformation.OnTableName = ist.table_name 
+    AND tForeignKeyInformation.OnTableSchema = ist.table_schema 
+
+WHERE (1=1) 
+AND ist.table_type = 'BASE TABLE' 
+AND ist.table_schema NOT IN ('pg_catalog', 'information_schema') 
+
+--AND NOT 
+--( 
+--  ist.table_schema = 'dbo' 
+--  AND 
+--  ist.table_name IN  
+--  ( 
+--       'MSreplication_options', 'spt_fallback_db', 'spt_fallback_dev', 'spt_fallback_usg', 'spt_monitor' 
+--       ,'sysdiagrams', 'dtproperties' 
+--  ) 
+--) 
+
+-- AND ist.table_name LIKE 'T[_]%' 
+-- AND ist.table_name NOT LIKE '%[_]bak[_]%' 
+-- AND ist.table_name NOT LIKE 'T[_]LOG[_]%' 
+
+ORDER BY OnTableSchema, OnTableName 
+; 
+
+
+-- SELECT DISTINCT OnTableSchema, OnTableName FROM #CTE_AllTables; 
+
+
+; WITH RECURSIVE CTE_RecursiveDependencyResolution AS 
+( 
+    SELECT 
+         OnTableSchema 
+        ,OnTableName 
+        ,FkNullable 
+        ,AgainstTableSchema 
+        ,AgainstTableName 
+        ,CONCAT(N';', OnTableSchema, N'.',  OnTableName, N';') AS PathName 
+        --,CAST(N';' || OnTableSchema  || N'.' || OnTableName || N';' AS text) AS PathName 
+        --,CAST(';' || OnTableId || ';' AS text) AS Path 
+        ,CONCAT(';', OnTableId, ';' ) AS Path 
+        ,0 AS lvl 
+    FROM CTE_AllTables 
+    WHERE (1=1) 
+    AND AgainstTableName IS NULL 
+
+
+    UNION ALL 
+
+
+    SELECT 
+         CTE_AllTables.OnTableSchema 
+        ,CTE_AllTables.OnTableName 
+        ,CTE_AllTables.FkNullable 
+        ,CTE_AllTables.AgainstTableSchema 
+        ,CTE_AllTables.AgainstTableName 
+        ,CONCAT(CTE_RecursiveDependencyResolution.PathName, CTE_AllTables.OnTableSchema, N'.', CTE_AllTables.OnTableName, N';') AS PathName 
+        --,CAST(CTE_RecursiveDependencyResolution.PathName || CTE_AllTables.OnTableSchema || N'.' || CTE_AllTables.OnTableName || N';' AS text) AS PathName 
+        --,CAST(CTE_RecursiveDependencyResolution.Path || CTE_AllTables.OnTableId || N';' AS text) AS Path 
+        ,CONCAT(CTE_RecursiveDependencyResolution.Path, CTE_AllTables.OnTableId, N';') AS Path 
+        ,CTE_RecursiveDependencyResolution.Lvl + 1 AS Lvl 
+    FROM CTE_RecursiveDependencyResolution 
+
+    INNER JOIN CTE_AllTables 
+        ON CTE_AllTables.AgainstTableName = CTE_RecursiveDependencyResolution.OnTableName 
+        AND CTE_AllTables.AgainstTableSchema = CTE_RecursiveDependencyResolution.OnTableSchema 
+        -- NOCYCLE-check - WARNING: Recursion source must not contain same-table foreign-key(s) 
+        AND CTE_RecursiveDependencyResolution.Path NOT LIKE '%;' || CTE_AllTables.OnTableId || ';%' 
+) 
+-- SELECT * FROM CTE_RecursiveDependencyResolution; 
+-- SELECT * FROM CTE_RecursiveDependencyResolution WHERE AgainstTableName = 'T_FMS_Navigation'; 
+
+SELECT 
+     MAX(lvl) AS Level 
+    ,OnTableSchema AS TableSchema
+    ,OnTableName AS TableName 
+    ,MIN(FkNullable) AS FkNullable 
+     
+    -- T-SQL: 
+    --,N'DELETE FROM ' + QUOTENAME(OnTableSchema) + N'.' + QUOTENAME(OnTableName) + N'; ' AS cmdDelete 
+    --,N'TRUNCATE TABLE ' + QUOTENAME(OnTableSchema) + N'.' + QUOTENAME(OnTableName) + N'; ' AS cmdTruncate 
+    --,N'DBCC CHECKIDENT (''' + REPLACE(OnTableSchema, N'''', N'''''') + '.' + REPLACE(OnTableName, N'''', N'''''') + N''', RESEED, 0)' AS cmdReseed 
+     
+    -- plPgSQL: 
+    --,'DELETE FROM ' || QUOTE_IDENT(OnTableSchema) || '.' || QUOTE_IDENT(OnTableName) || ';' || ' ' AS cmdDelete 
+    ,CONCAT(N'DELETE FROM ', QUOTE_IDENT(OnTableSchema), N'.', QUOTE_IDENT(OnTableName), N'; ') AS cmdDelete 
+    
+    -- ,N'TRUNCATE TABLE ' || QUOTE_IDENT(OnTableSchema) || N'.' || QUOTE_IDENT(OnTableName) || N'; ' AS cmdTruncate 
+    ,CONCAT(N'TRUNCATE TABLE ', QUOTE_IDENT(OnTableSchema), N'.', QUOTE_IDENT(OnTableName), N'; ') AS cmdTruncate1 
+FROM CTE_RecursiveDependencyResolution 
+
+GROUP BY OnTableSchema, OnTableName 
+
+
+ORDER BY 
+     Level, 
+     TableSchema 
+    ,TableName 
+    ,FkNullable 
+     
+-- OPTION (MAXRECURSION 0) 
+; 
+
+-- DROP TABLE IF EXISTS CTE_AllTables; 
+";
+            return this.GetDataTable(strSQL);
+        }
+
 
         ////////////////////////////// Schema //////////////////////////////
 
@@ -291,93 +468,6 @@ ORDER BY TABLE_SCHEMA, TABLE_NAME ASC
         } // End Function GetTables
 		
 
-		public override System.Data.DataTable GetForeignKeyDependencies()
-		{
-			string strSQL = @"
-WITH RECURSIVE Fkeys AS 
-(
-    SELECT DISTINCT 
-         KCU1.TABLE_NAME AS OnTable 
-        ,KCU2.TABLE_NAME AS AgainstTable 
-    FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC 
-
-    LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU1 
-        ON KCU1.CONSTRAINT_CATALOG = RC.CONSTRAINT_CATALOG  
-        AND KCU1.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA 
-        AND KCU1.CONSTRAINT_NAME = RC.CONSTRAINT_NAME 
-
-    LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU2 
-        ON KCU2.CONSTRAINT_CATALOG =  RC.UNIQUE_CONSTRAINT_CATALOG  
-        AND KCU2.CONSTRAINT_SCHEMA = RC.UNIQUE_CONSTRAINT_SCHEMA 
-        AND KCU2.CONSTRAINT_NAME = RC.UNIQUE_CONSTRAINT_NAME 
-        AND KCU2.ORDINAL_POSITION = KCU1.ORDINAL_POSITION 
-)
-
-,MyData AS 
-( 
-    SELECT 
-         TABLE_NAME AS OnTable  
-        ,FKeys.againstTable AS AgainstTable
-    FROM INFORMATION_SCHEMA.TABLES 
-
-    LEFT JOIN FKeys
-        ON TABLE_NAME = FKeys.onTable  
-
-    WHERE (1=1) 
-        AND TABLE_TYPE = 'BASE TABLE'
-        AND TABLE_SCHEMA = 'public'
-        --AND TABLE_NAME NOT IN ('sysdiagrams', 'dtproperties') 
-)
-
-
-,MyRecursion AS 
-(
-    -- base case
-    SELECT  
-         OnTable AS TableName 
-        ,1 AS Lvl 
-    FROM MyData
-    WHERE 1=1
-    AND AgainstTable IS NULL 
-
-    -- recursive case
-    UNION ALL 
-
-    SELECT 
-         OnTable AS TableName
-        ,r.Lvl + 1 AS Lvl 
-    FROM MyData d 
-
-    INNER JOIN MyRecursion r 
-        ON d.AgainstTable = r.TableName 
-)
-
-SELECT 
-     MAX(Lvl) AS Lvl 
-    ,TableName
-    --,strSql = 'delete from [' + tablename + ']'
-FROM 
-    MyRecursion
-GROUP BY
-    TableName
-
-ORDER BY lvl
-
-
-/*
-ORDER BY 
-
-     2 ASC
-    ,1 ASC
-
-*/
-";
-			
-			return this.GetDataTable(strSQL);
-		}
-		
-		
-        
         // http://www.firebirdfaq.org/faq174/
         public override System.Data.DataTable GetViews(string strInitialCatalog)
         {

@@ -35,6 +35,27 @@ namespace DB.Abstraction
         } // End Constructor 2
 
 
+        protected override DB.Abstraction.NET20_Substitute.Generics.HashSet<string> GetReservedKeywords()
+        {
+            DB.Abstraction.NET20_Substitute.Generics.HashSet<string> hs = 
+                new DB.Abstraction.NET20_Substitute.Generics.HashSet<string>(System.StringComparer.InvariantCultureIgnoreCase);
+
+            hs.Add("DEFAULT");
+
+            return hs;
+        }
+
+
+        public override string QuoteObject(string ObjectName)
+        {
+            if (string.IsNullOrEmpty(ObjectName))
+                throw new System.ArgumentNullException("ObjectName");
+
+            ObjectName = ObjectName.ToLowerInvariant();
+            return "\"" + ObjectName.Replace("\"", "\"\"") + "\"";
+        }
+        
+
         public void DeleteLargeObject(int noid)
         {
             using (Npgsql.NpgsqlConnection connection = new Npgsql.NpgsqlConnection(GetConnectionString()))

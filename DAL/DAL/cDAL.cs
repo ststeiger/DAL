@@ -2870,47 +2870,24 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
 
 
-    public  void SwitchConstraints(string tableSchema, string tableName, bool mode )
+    public virtual void SwitchConstraints(string tableSchema, string tableName, bool mode )
     {
         SwitchConstraint(tableSchema, tableName, null, mode);
     }
 
 
-    public  void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
+    public virtual void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
     {
-        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? NOCHECK CONSTRAINT ALL"
-        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? CHECK CONSTRAINT ALL" 
-        if (constraintName == null)
-            constraintName = "ALL";
-        else
-            constraintName = this.QuoteObjectWhereNecessary(constraintName);
-
-        if (mode)
-        {
-            this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema) 
-                +"." 
-                + this.QuoteObjectWhereNecessary(tableName) 
-                + " CHECK CONSTRAINT " 
-                + constraintName
-            );
-            return;
-        }
-
-        this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
-                + "."
-                + this.QuoteObjectWhereNecessary(tableName)
-                + " NOCHECK CONSTRAINT "
-                + constraintName
-        );
     }
 
 
-    public  void SwitchTriggers(string tableSchema, string tableName, bool mode)
+    public virtual void SwitchTriggers(string tableSchema, string tableName, bool mode)
     {
         SwitchTrigger(tableSchema, tableName, null, mode);
     }
 
-    public void SwitchTrigger(string tableSchema, string tableName, string triggerName, bool mode)
+    
+    public virtual void SwitchTrigger(string tableSchema, string tableName, string triggerName, bool mode)
     {
         // EXEC sp_MSforeachtable @command1="ALTER TABLE ? DISABLE TRIGGER ALL"
         //EXEC sp_MSforeachtable @command1="ALTER TABLE ? ENABLE TRIGGER ALL"
@@ -2931,12 +2908,12 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         }
 
         this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
-                + "."
-                + this.QuoteObjectWhereNecessary(tableName)
-                + " DISABLE TRIGGER "
-                + triggerName
+            + "."
+            + this.QuoteObjectWhereNecessary(tableName)
+            + " DISABLE TRIGGER "
+            + triggerName
         );
-
+        
     }
 
 
@@ -2946,10 +2923,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         // https://stackoverflow.com/questions/13772019/sql-check-if-a-column-auto-increments
         public virtual bool IsAutoIncrementTable(string tableSchema, string tableName)
         {
-            string SQL = @"SELECT ISNULL(MAX(CAST(is_identity AS int)), 0) FROM sys.columns 
-WHERE object_id = object_id('" + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + @"')
-";
-            return this.ExecuteScalar<bool>(SQL);      
+            return false;     
         }
 
 
