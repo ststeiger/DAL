@@ -26,7 +26,7 @@ namespace DB.Abstraction
             Sybase_ASE = 5,
             Sybase_ASA = 6,
             Access = 7,
-            SQLite = 7,
+            SQLite = 8,
             OleDB = 996,
             ODBC = 997,
             Generic = 998,
