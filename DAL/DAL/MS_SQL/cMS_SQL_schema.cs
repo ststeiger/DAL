@@ -1488,65 +1488,152 @@ ORDER BY ORDINAL_POSITION
         public override System.Data.DataTable GetForeignKeyDependencies()
         {
             string strSQL = @"
-;WITH TablesCTE(SchemaName, TableName, TableID, Ordinal) AS
-(
-    SELECT
-        OBJECT_SCHEMA_NAME(so.object_id) AS SchemaName,
-        OBJECT_NAME(so.object_id) AS TableName,
-        so.object_id AS TableID,
-        0 AS Ordinal
-    FROM sys.objects AS so
-    WHERE so.type = 'U'
-    AND so.is_ms_Shipped = 0
-        
-    UNION ALL
 
-    SELECT
-        OBJECT_SCHEMA_NAME(so.object_id) AS SchemaName,
-        OBJECT_NAME(so.object_id) AS TableName,
-        so.object_id AS TableID,
-        tt.Ordinal + 1 AS Ordinal
-    FROM sys.objects AS so 
-    
-    INNER JOIN sys.foreign_keys AS f 
-        ON f.parent_object_id = so.object_id 
-        AND f.parent_object_id != f.referenced_object_id 
-        
-    INNER JOIN TablesCTE AS tt
-        ON f.referenced_object_id = tt.TableID
-    
-    WHERE
-        so.type = 'U'
-        AND so.is_ms_Shipped = 0
-)
+IF OBJECT_ID('tempdb..#CTE_ForeignKeys') IS NOT NULL DROP TABLE #CTE_ForeignKeys; 
 
-SELECT DISTINCT
-     t.Ordinal
-    ,t.SchemaName
-    ,t.TableName
-    ,t.TableID
-FROM TablesCTE AS t 
-    
-INNER JOIN
-    (
-        SELECT
-            itt.SchemaName as SchemaName,
-            itt.TableName as TableName,
-            itt.TableID as TableID,
-            Max(itt.Ordinal) as Ordinal
-        FROM
-            TablesCTE AS itt
-        GROUP BY
-            itt.SchemaName,
-            itt.TableName,
-            itt.TableID
-    ) AS tt
-    ON t.TableID = tt.TableID
-    AND t.Ordinal = tt.Ordinal 
+SELECT  
+	 OnTableSchema.name OnTableSchema 
+	,OnTable.name AS OnTable 
+	,OnTable.object_id AS OnTableId 
+	
+	-- if (x·'YES' + 1⁺·'NO') ==> pick NO, else pick YES 
+	,MIN(CONVERT(varchar(3), CASE c.is_nullable  WHEN 1 THEN 'YES' ELSE 'NO' END)) AS FkNullable 
+	 
+	,AgainstTableSchema.name AS AgainstTableSchema 
+	,AgainstTable.name AS AgainstTableName 
+	,AgainstTable.object_id AS AgainstTableId 
+INTO #CTE_ForeignKeys 
+FROM sys.foreign_keys AS FKs 
 
-ORDER BY
-    t.Ordinal,
-    t.TableName
+INNER JOIN sys.objects AS OnTable 
+	ON OnTable.object_id = FKs.parent_object_id 
+	
+INNER JOIN sys.schemas AS OnTableSchema 
+	ON OnTableSchema.schema_id = OnTable.schema_id 
+	
+INNER JOIN sys.objects AS AgainstTable 
+	ON AgainstTable.object_id = FKs.referenced_object_id 
+	
+INNER JOIN sys.schemas AS AgainstTableSchema 
+	ON AgainstTableSchema.schema_id = AgainstTable.schema_id 
+	
+INNER JOIN sys.foreign_key_columns AS k 
+	ON k.constraint_object_id = FKs.object_id 
+
+INNER JOIN sys.columns AS c 
+	ON c.object_id = OnTable.object_id  
+	AND c.name = col_name(k.parent_object_id, k.parent_column_id) 
+
+WHERE (1=1) 
+AND AgainstTable.TYPE = 'U' 
+AND OnTable.TYPE = 'U' 
+-- ignore self joins; they cause an infinite recursion 
+-- AND OnTable.Name <> AgainstTable.Name 
+AND OnTable.object_id <> AgainstTable.object_id 
+
+
+GROUP BY 
+	 OnTableSchema.name -- OnTableSchema 
+	,OnTable.name -- OnTable 
+	,OnTable.object_id --  OnTableId 
+	 
+	,AgainstTableSchema.name -- AgainstTableSchema 
+	,AgainstTable.name -- AgainstTableName 
+	,AgainstTable.object_id -- AgainstTableId 
+
+
+
+
+IF OBJECT_ID('tempdb..#CTE_TableWithDependencies') IS NOT NULL DROP TABLE #CTE_TableWithDependencies; 
+
+
+
+SELECT 
+     AllObjects.name AS OnTable 
+	,CAST(AllObjects.object_id AS varchar(20)) AS OnTableId 
+    ,OnTableSchema.name AS OnTableSchema 
+    ,#CTE_ForeignKeys.FkNullable
+    ,#CTE_ForeignKeys.AgainstTableName 
+    ,#CTE_ForeignKeys.AgainstTableSchema 
+	,CAST(#CTE_ForeignKeys.AgainstTableId AS varchar(20)) AS AgainstTableId 
+INTO #CTE_TableWithDependencies 
+FROM sys.objects AS AllObjects 
+
+INNER JOIN sys.schemas AS OnTableSchema 
+	ON OnTableSchema.schema_id = AllObjects.schema_id 
+    
+LEFT JOIN #CTE_ForeignKeys 
+	ON #CTE_ForeignKeys.OnTableId = AllObjects.object_id 
+	-- ON #CTE_ForeignKeys.onTable = AllObjects.name 
+
+WHERE (1=1) 
+AND AllObjects.type = 'U' 
+-- AND AllObjects.name NOT LIKE 'sys%' 
+AND OBJECTPROPERTY(AllObjects.object_id, 'IsMSShipped') = 0 
+-- AND AllObjects.name LIKE 'T[_]%' 
+
+
+
+;WITH CTE_DependencyResolution AS 
+( 
+    -- Tables with no foreign keys on them 
+    SELECT 
+         #CTE_TableWithDependencies.OnTable AS TableName 
+        ,#CTE_TableWithDependencies.OnTableSchema AS TableSchema 
+        ,#CTE_TableWithDependencies.FkNullable
+		,CAST(';' + #CTE_TableWithDependencies.OnTableId + ';' AS varchar(MAX)) AS Path 
+        ,1 AS Lvl 
+    FROM #CTE_TableWithDependencies 
+    WHERE (1=1) 
+	AND #CTE_TableWithDependencies.AgainstTableName IS NULL 
+	
+	
+    UNION ALL 
+    
+    
+	-- Recursive join on foreign-key dependencies - without infinite recursion 
+    SELECT 
+         #CTE_TableWithDependencies.OnTable AS TableName 
+        ,#CTE_TableWithDependencies.OnTableSchema AS TableSchema 
+        ,#CTE_TableWithDependencies.FkNullable 
+		,CAST(CTE_DependencyResolution.Path + #CTE_TableWithDependencies.OnTableId + N';' AS varchar(MAX)) AS Path 
+        ,CTE_DependencyResolution.Lvl + 1 AS Lvl 
+    FROM #CTE_TableWithDependencies 
+    
+	INNER JOIN CTE_DependencyResolution 
+		ON CTE_DependencyResolution.TableName = #CTE_TableWithDependencies.AgainstTableName 
+		-- NoCycle -- prevent infinite recursion 
+		AND CTE_DependencyResolution.Path NOT LIKE '%;' + #CTE_TableWithDependencies.OnTableId + ';%' 
+) 
+
+
+
+
+SELECT TOP 999999999999999999 
+     MAX(Lvl) AS Level  
+    ,TableSchema 
+    ,TableName 
+    ,MIN(FkNullable) AS FkNullable 
+    ,N'DELETE FROM ' + QUOTENAME(TableSchema) + N'.' + QUOTENAME(TableName) + N'; ' AS DeleteCmd 
+    ,N'TRUNCATE TABLE ' + QUOTENAME(TableSchema) + N'.' + QUOTENAME(TableName) + N'; ' AS TruncateCmd -- Only works when no foreign keys 
+    ,N'DBCC CHECKIDENT (''' + REPLACE(TableSchema, N'''', N'''''') + '.' + REPLACE(TableName, N'''', N'''''') + N''', RESEED, 0)' AS ReseedCmd 
+FROM CTE_DependencyResolution 
+
+GROUP BY 
+	 TableSchema 
+    ,TableName 
+     
+     
+ORDER BY 
+	 Level DESC 
+	,TableSchema 
+	,TableName 
+;
+ 
+   
+IF OBJECT_ID('tempdb..#CTE_ForeignKeys') IS NOT NULL DROP TABLE #CTE_ForeignKeys; 
+IF OBJECT_ID('tempdb..#CTE_TableWithDependencies') IS NOT NULL DROP TABLE #CTE_TableWithDependencies; 
+
 ";
 
 
