@@ -13,16 +13,11 @@ namespace DB.Topology
 
     public class TopologicalSorter
     {
-        #region - Private Members -
-
         private readonly int[] _vertices; // list of vertices
         private readonly int[,] _matrix; // adjacency matrix
         private int _numVerts; // current number of vertices
         private readonly int[] _sortedArray;
 
-        #endregion
-
-        #region - CTors -
 
         public TopologicalSorter(int size)
         {
@@ -35,15 +30,13 @@ namespace DB.Topology
             _sortedArray = new int[size]; // sorted vert labels
         }
 
-        #endregion
-
-        #region - Public Methods -
 
         public int AddVertex(int vertex)
         {
             _vertices[_numVerts++] = vertex;
             return _numVerts - 1;
         }
+
 
         public void AddEdge(int start, int end)
         {
@@ -70,10 +63,7 @@ namespace DB.Topology
             // vertices all gone; return sortedArray
             return _sortedArray;
         }
-
-        #endregion
-
-        #region - Private Helper Methods -
+        
 
         // returns vert with no successors (or -1 if no such verts)
         private int noSuccessors()
@@ -95,6 +85,7 @@ namespace DB.Topology
             return -1; // no
         }
 
+
         private void deleteVertex(int delVert)
         {
             // if not last vertex, delete from vertexList
@@ -112,11 +103,13 @@ namespace DB.Topology
             _numVerts--; // one less vertex
         }
 
+
         private void moveRowUp(int row, int length)
         {
             for (int col = 0; col < length; col++)
                 _matrix[row, col] = _matrix[row + 1, col];
         }
+
 
         private void moveColLeft(int col, int length)
         {
@@ -124,7 +117,7 @@ namespace DB.Topology
                 _matrix[row, col] = _matrix[row, col + 1];
         }
 
-        #endregion
+
     }
 
 
