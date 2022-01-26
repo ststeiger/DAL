@@ -426,7 +426,7 @@ namespace DB.Abstraction
             if (string.IsNullOrEmpty(strStaticConnectionString))
             {
 
-                if (!IEnumerableExtensions.Contains(sb.Keys, "Integrated Security") 
+                if (!IEnumerableExtensions.Contains(sb.Keys, "Integrated Security")
                     || !System.Convert.ToBoolean(sb["Integrated Security"])
                  )
                 {
@@ -475,8 +475,8 @@ namespace DB.Abstraction
                 } // End Try
                 catch (System.Data.Common.DbException ex)
                 {
-                    if (Log("Error opening SQL-datatbase connection." 
-                        + System.Environment.NewLine + "ConnectionString: " + idbc.ConnectionString 
+                    if (Log("Error opening SQL-datatbase connection."
+                        + System.Environment.NewLine + "ConnectionString: " + idbc.ConnectionString
                         + System.Environment.NewLine + ex.Message))
                         throw;
                 } // End Catch
@@ -774,7 +774,7 @@ namespace DB.Abstraction
                         lock (cmd)
                         {
                             cmd.Connection = idbConn;
-                            cmd.CommandTimeout = iTimeout; 
+                            cmd.CommandTimeout = iTimeout;
 
                             try
                             {
@@ -1303,7 +1303,7 @@ ORDER BY ORDINAL_POSITION
                         {
                             if (Log("cDAL.ExecuteScalar<T>(string strSQL)", ex, cmd.CommandText))
                                 throw;
-                        
+
                         } // End Catch
                         finally
                         {
@@ -1343,32 +1343,32 @@ ORDER BY ORDINAL_POSITION
                 } // End if bool
                 else if (object.ReferenceEquals(tReturnType, typeof(int)))
                 {
-                    int iReturnValue = int.Parse(strReturnValue);
+                    int iReturnValue = int.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(iReturnValue);
                 } // End if int
                 else if (object.ReferenceEquals(tReturnType, typeof(uint)))
                 {
-                    uint uiReturnValue = uint.Parse(strReturnValue);
+                    uint uiReturnValue = uint.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(uiReturnValue);
                 } // End if uint
                 else if (object.ReferenceEquals(tReturnType, typeof(long)))
                 {
-                    long lngReturnValue = long.Parse(strReturnValue);
+                    long lngReturnValue = long.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(lngReturnValue);
                 } // End if long
                 else if (object.ReferenceEquals(tReturnType, typeof(ulong)))
                 {
-                    ulong ulngReturnValue = ulong.Parse(strReturnValue);
+                    ulong ulngReturnValue = ulong.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(ulngReturnValue);
                 } // End if ulong
                 else if (object.ReferenceEquals(tReturnType, typeof(float)))
                 {
-                    float fltReturnValue = float.Parse(strReturnValue);
+                    float fltReturnValue = float.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(fltReturnValue);
                 }
                 else if (object.ReferenceEquals(tReturnType, typeof(double)))
                 {
-                    double dblReturnValue = double.Parse(strReturnValue);
+                    double dblReturnValue = double.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(dblReturnValue);
                 }
                 else if (object.ReferenceEquals(tReturnType, typeof(System.Net.IPAddress)))
@@ -1531,7 +1531,7 @@ ORDER BY ORDINAL_POSITION
 
 
         public enum SerializationFormat_t : int
-        { 
+        {
             JSON,
             XML
         }
@@ -1735,7 +1735,7 @@ ORDER BY ORDINAL_POSITION
                 // WARNING: ISO will not deserialize properly...
                 // jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
                 jsonWriter.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.MicrosoftDateFormat;
-                
+
                 if (bPrettyPrint)
                     jsonWriter.Formatting = Newtonsoft.Json.Formatting.Indented;
                 else
@@ -1835,13 +1835,16 @@ ORDER BY ORDINAL_POSITION
 
             System.Xml.XmlWriterSettings settings = new System.Xml.XmlWriterSettings()
             {
-                 Encoding = System.Text.Encoding.UTF8
-                ,Indent = true
-                ,IndentChars = "  "
-                 // Make it Windows-Readable
-                ,NewLineChars = "\r\n" // System.Environment.NewLine
+                Encoding = System.Text.Encoding.UTF8
+                ,
+                Indent = true
+                ,
+                IndentChars = "  "
+                // Make it Windows-Readable
+                ,
+                NewLineChars = "\r\n" // System.Environment.NewLine
             };
-            
+
 
             using (System.Xml.XmlWriter writer = System.Xml.XmlWriter.Create(target, settings))
             {
@@ -1946,13 +1949,13 @@ ORDER BY ORDINAL_POSITION
             sb.Insert(0, this.QuoteObject(tableName));
             sb.Insert(0, ".");
             sb.Insert(0, this.QuoteObject(schema));
-            sb.Insert(0,"SELECT * FROM ");
-            
+            sb.Insert(0, "SELECT * FROM ");
+
 
             string strSQL = sb.ToString();
             sb.Length = 0;
             sb = null;
-            
+
             return GetDataTable(strSQL);
         } // End Function GetEntireTable 
 
@@ -2860,9 +2863,9 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
 
         public virtual string GetIdentityInsert(string tableSchema, string tableName, bool b)
-        { 
-            if(b)
-                return "SET IDENTITY_INSERT "+this.QuoteObjectWhereNecessary(tableSchema) +"." + this.QuoteObjectWhereNecessary(tableName) + " ON; ";
+        {
+            if (b)
+                return "SET IDENTITY_INSERT " + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + " ON; ";
 
             return "SET IDENTITY_INSERT " + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(tableName) + " OFF; ";
         }
@@ -2870,51 +2873,51 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
 
 
-    public virtual void SwitchConstraints(string tableSchema, string tableName, bool mode )
-    {
-        SwitchConstraint(tableSchema, tableName, null, mode);
-    }
-
-
-    public virtual void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
-    {
-    }
-
-
-    public virtual void SwitchTriggers(string tableSchema, string tableName, bool mode)
-    {
-        SwitchTrigger(tableSchema, tableName, null, mode);
-    }
-
-    
-    public virtual void SwitchTrigger(string tableSchema, string tableName, string triggerName, bool mode)
-    {
-        // EXEC sp_MSforeachtable @command1="ALTER TABLE ? DISABLE TRIGGER ALL"
-        //EXEC sp_MSforeachtable @command1="ALTER TABLE ? ENABLE TRIGGER ALL"
-        if (triggerName == null)
-            triggerName = "ALL";
-        else
-            triggerName = this.QuoteObjectWhereNecessary(triggerName);
-
-        if (mode)
+        public virtual void SwitchConstraints(string tableSchema, string tableName, bool mode)
         {
+            SwitchConstraint(tableSchema, tableName, null, mode);
+        }
+
+
+        public virtual void SwitchConstraint(string tableSchema, string tableName, string constraintName, bool mode)
+        {
+        }
+
+
+        public virtual void SwitchTriggers(string tableSchema, string tableName, bool mode)
+        {
+            SwitchTrigger(tableSchema, tableName, null, mode);
+        }
+
+
+        public virtual void SwitchTrigger(string tableSchema, string tableName, string triggerName, bool mode)
+        {
+            // EXEC sp_MSforeachtable @command1="ALTER TABLE ? DISABLE TRIGGER ALL"
+            //EXEC sp_MSforeachtable @command1="ALTER TABLE ? ENABLE TRIGGER ALL"
+            if (triggerName == null)
+                triggerName = "ALL";
+            else
+                triggerName = this.QuoteObjectWhereNecessary(triggerName);
+
+            if (mode)
+            {
+                this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
+                    + "."
+                    + this.QuoteObjectWhereNecessary(tableName)
+                    + " ENABLE TRIGGER "
+                    + triggerName
+                );
+                return;
+            }
+
             this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
                 + "."
                 + this.QuoteObjectWhereNecessary(tableName)
-                + " ENABLE TRIGGER "
+                + " DISABLE TRIGGER "
                 + triggerName
             );
-            return;
-        }
 
-        this.ExecuteNonQuery("ALTER TABLE " + this.QuoteObjectWhereNecessary(tableSchema)
-            + "."
-            + this.QuoteObjectWhereNecessary(tableName)
-            + " DISABLE TRIGGER "
-            + triggerName
-        );
-        
-    }
+        }
 
 
 
@@ -2923,7 +2926,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
         // https://stackoverflow.com/questions/13772019/sql-check-if-a-column-auto-increments
         public virtual bool IsAutoIncrementTable(string tableSchema, string tableName)
         {
-            return false;     
+            return false;
         }
 
 
@@ -2939,10 +2942,10 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
             string strInsert = @"INSERT INTO " + this.QuoteObject(tableSchema) + "." + this.QuoteObject(tableName) + "( \r\n";
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            
+
             int openArrayCounter = 0;
             JsonFieldInfo[] columnInfo = null;
-            
+
             int currentBatchSize = 0;
             const int BATCH_SIZE = 250;
 
@@ -3036,7 +3039,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                                                             } // Next thisArrayMember 
 
                                                         } // End Scope: KEEP_i_LOCAL
-                                                        
+
                                                         sb.Append(");\r\n"); // End Insert Row
                                                         ++currentBatchSize;
 
@@ -3140,7 +3143,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                                     this.SwitchConstraints(tableSchema, tableName, true);
                                     this.SwitchTriggers(tableSchema, tableName, true);
 
-                                    if(Log(ex, cmd))
+                                    if (Log(ex, cmd))
                                         throw;
                                 } // End catch
                                 finally
@@ -3186,7 +3189,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             System.Text.StringBuilder sbSqlStatements = new System.Text.StringBuilder();
 
 
-            string strSQLGetColumns = "SELECT * FROM " + this.QuoteObjectWhereNecessary(tableSchema) +"."+ this.QuoteObjectWhereNecessary(strDestinationTable) + " WHERE (1=2); ";
+            string strSQLGetColumns = "SELECT * FROM " + this.QuoteObjectWhereNecessary(tableSchema) + "." + this.QuoteObjectWhereNecessary(strDestinationTable) + " WHERE (1=2); ";
             using (System.Data.DataTable dtColumns = this.GetDataTable(strSQLGetColumns))
             {
                 // create the columns portion of the INSERT statement
@@ -3208,7 +3211,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 bool bDebug = true;
 
 
-                this.BatchedInsert(dt, delegate(System.Text.StringBuilder sb, System.Data.DataRow dr)
+                this.BatchedInsert(dt, delegate (System.Text.StringBuilder sb, System.Data.DataRow dr)
                 {
                     sb.Append(form);
 
@@ -3238,10 +3241,10 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
                             sb.Append("\r\n");
                         }
-                        catch(System.Exception ex)
+                        catch (System.Exception ex)
                         {
                             System.Console.WriteLine(ex.Message);
-                            if(Log(ex, sb.ToString()))
+                            if (Log(ex, sb.ToString()))
                                 throw;
                         }
                     } // Next dc
@@ -3346,7 +3349,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             return iAffected;
         } // End Function BatchedInsert 
 
-        
+
         public virtual string GenerateBulkInserts(System.Data.DataTable dtTable, string targetTableSchema, string sTargetTableName, bool bDebug)
         {
             System.Collections.Generic.List<string> lsComputedColumns = GetComputedColumnNames(targetTableSchema, sTargetTableName);
@@ -3628,7 +3631,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             }
 
             double dblResult;
-            if (double.TryParse(strText, out dblResult))
+            if (double.TryParse(strText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblResult))
             {
                 if (dblResult != 0.0)
                     return "1";
@@ -3650,7 +3653,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 {
                     System.DateTime dtDateTime = (System.DateTime)obj;
                     //strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"); // Max precision .NET
-                    strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fff"); // Max precision SQL
+                    strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture); // Max precision SQL
                     //strText = dtDateTime.ToString("yyyyMMdd"); // Proper date
                     // Access NEEDS dtDateTime.ToString("yyyy-MM-dd");
 
@@ -3782,13 +3785,13 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             {
                 System.DateTime dtDateTime = (System.DateTime)obj;
                 //strText = dtDateTime.ToString("yyyy-MM-dd");
-                strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss"); // ISO 8601
+                strText = dtDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture); // ISO 8601
                 return "'" + strText.Replace("'", "''") + "'"; // Don't trust .NET - Paranoia
             }
 
             if (object.ReferenceEquals(t, typeof(System.Guid)))
             {
-                return "'" + obj.ToString() + "'";
+                return "'" + System.Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture) + "'";
             }
 
             if (object.ReferenceEquals(t, typeof(bool)))
@@ -3801,12 +3804,12 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
                 return "'" + strText + "'";
             }
-            
+
             if (object.ReferenceEquals(t, typeof(byte[])))
             {
                 return "0x" + ByteToHexBitFiddle((byte[])obj);
             }
-            
+
             if (object.ReferenceEquals(t.BaseType, typeof(System.Text.Encoding)))
             {
                 System.Text.Encoding enc = (System.Text.Encoding)obj;
@@ -3820,7 +3823,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 return strText;
             }
 
-            return "'" + obj.ToString().Replace("'", "''") + "'";
+            return "'" + System.Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture).Replace("'", "''") + "'";
         } // End Function GetInsertText 
 
 
@@ -3940,7 +3943,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 case System.Data.DbType.Object:
                     strRetVal = "sql_variant";
                     break;
-                    
+
                 case System.Data.DbType.UInt16:
                 case System.Data.DbType.UInt32:
                 case System.Data.DbType.UInt64:
@@ -3953,7 +3956,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
         public static string JoinArray<T>(string separator, T[] inputTypeArray)
         {
-            return JoinArray<T>(separator, inputTypeArray, object.ReferenceEquals(typeof(T), typeof(string))  );
+            return JoinArray<T>(separator, inputTypeArray, object.ReferenceEquals(typeof(T), typeof(string)));
         }
 
 
@@ -3967,7 +3970,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
                 string str = System.Convert.ToString(inputTypeArray[i], System.Globalization.CultureInfo.InvariantCulture);
 
                 if (!string.IsNullOrEmpty(str))
-                { 
+                {
                     // SQL-Escape
                     if (sqlEscapeString)
                         str = str.Replace("'", "''");
@@ -3977,7 +3980,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
 
             } // Next i 
 
-            strRetValue= string.Join(separator, ls.ToArray());
+            strRetValue = string.Join(separator, ls.ToArray());
             ls.Clear();
             ls = null;
 
@@ -4296,7 +4299,7 @@ ORDER BY SPECIFIC_NAME ASC
 
         }
 
-        
+
         public virtual System.Data.DataTable GetRoutines()
         {
             return GetRoutines(null);
@@ -4353,7 +4356,7 @@ ORDER BY SPECIFIC_NAME ASC
 
         } // End Function GetTableValuedFunctions
 
-        
+
         public virtual System.Data.DataTable GetColumnNames()
         {
             string strSQL = @"
@@ -4371,7 +4374,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION
             string strCatalog = strDb;
 
             //if (string.IsNullOrEmpty(strCatalog))
-                // strCatalog = this.m_ConnectionString.Database;
+            // strCatalog = this.m_ConnectionString.Database;
 
             using (System.Data.IDbCommand cmd = CreateCommand())
             {
@@ -4415,7 +4418,7 @@ ORDER BY table_name, ordinal_position
             {
                 this.AddParameter(cmd, "strSchema", this.DefaultSchema);
                 this.AddParameter(cmd, "strTableName", strTableName);
-                
+
                 dt = this.GetDataTable(cmd, strDbName);
             } // End using cmd 
 
@@ -4991,7 +4994,7 @@ ROLLBACK TRANSACTION
             {
                 System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
                 string strMethodName = stackTrace.GetFrame(1).GetMethod().Name;
-                throw new System.NullReferenceException("Error in cDAL.CreateInstance: strInputType is NULL or empty. " 
+                throw new System.NullReferenceException("Error in cDAL.CreateInstance: strInputType is NULL or empty. "
                     + System.Environment.NewLine + "Calling method: \"" + strMethodName + "\".");
             } // End if (string.IsNullOrEmpty(strInputType))
 
@@ -4999,7 +5002,7 @@ ROLLBACK TRANSACTION
             {
                 System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
                 string strMethodName = stackTrace.GetFrame(1).GetMethod().Name;
-                throw new System.NullReferenceException("Error in cDAL.CreateInstance: strConnectionString is NULL or empty. " 
+                throw new System.NullReferenceException("Error in cDAL.CreateInstance: strConnectionString is NULL or empty. "
                     + System.Environment.NewLine + "Calling method: \"" + strMethodName + "\".");
             } // End if (string.IsNullOrEmpty(strConnectionString))
 
@@ -5308,7 +5311,7 @@ ROLLBACK TRANSACTION
 
         protected static System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>> GetSQLtemplates()
         {
-            System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>> dictTempScripts = 
+            System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>> dictTempScripts =
                 new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>
                     (System.StringComparer.OrdinalIgnoreCase);
 
@@ -5401,14 +5404,14 @@ ROLLBACK TRANSACTION
             } // End if (dictTempScripts.ContainsKey("All"))
 
 
-            System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>> dictScripts = 
+            System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>> dictScripts =
                 new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>
                     (System.StringComparer.OrdinalIgnoreCase);
 
             foreach (string strThisFolder in dictTempScripts.Keys)
             {
                 //Console.WriteLine(strThisFolder);
-                dictScripts.Add(strThisFolder, 
+                dictScripts.Add(strThisFolder,
                     new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase));
 
                 foreach (string strThisKey in dictTempScripts[strThisFolder].Keys)
@@ -5853,7 +5856,7 @@ ROLLBACK TRANSACTION
             {
                 System.Text.StringBuilder msg = new System.Text.StringBuilder();
                 System.DateTime dtLogTime = System.DateTime.UtcNow;
-                
+
 
                 if (cmd == null || string.IsNullOrEmpty(cmd.CommandText))
                 {
@@ -5980,7 +5983,7 @@ ROLLBACK TRANSACTION
                         {
                             strMessage += System.Environment.NewLine;
                             strMessage += ex.InnerException.Message + System.Environment.NewLine + System.Environment.NewLine;
-                            strMessage += "Inner stacktrace: " + System.Environment.NewLine 
+                            strMessage += "Inner stacktrace: " + System.Environment.NewLine
                                 + ex.InnerException.StackTrace + System.Environment.NewLine
                                 + System.Environment.NewLine;
                         } // End if (ex.InnerException != null)
